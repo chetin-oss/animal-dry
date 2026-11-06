@@ -51,6 +51,8 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--amber);outline-
 .acts button.on{background:var(--amber);color:var(--amber-ink)}
 .acts kbd{font-size:10.5px}
 .groom{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom,0px));border-radius:20px;padding:10px 12px;display:flex;align-items:center;gap:10px;max-width:calc(100vw - 24px)}
+.groom .zoom{display:flex;flex-direction:column;gap:4px}
+.groom .zoom button{border:1px solid var(--line);background:var(--solid);border-radius:10px;width:34px;height:26px;font-size:15px;line-height:1;padding:0}
 .groom .spin{border:1px solid var(--line);background:var(--solid);border-radius:12px;padding:9px 12px;font-size:13px;white-space:nowrap}
 .groom .mid{display:flex;flex-direction:column;gap:4px;min-width:150px;flex:1}
 .groom .mid b{font-family:var(--f-display);font-weight:400;font-size:17px;white-space:nowrap}
@@ -104,6 +106,10 @@ kbd{font-family:var(--f-body);font-size:11px;border:1px solid var(--line);border
   .groom .spin{padding:8px 9px}
   .groom .mid{min-width:0}
   .groom .mid small{display:none}
+  .groom{flex-wrap:wrap;justify-content:center;width:calc(100vw - 24px)}
+  .groom .zoom{flex-direction:row}
+  .groom .mid{order:-1;flex-basis:100%}
+  .groom .mid b{font-size:15px}
   .groom .stop{padding:9px 10px;font-size:14px}
   .pin{min-width:96px;padding:4px 8px 6px}
   .pin b{font-size:12.5px}
@@ -135,6 +141,7 @@ kbd{font-family:var(--f-body);font-size:11px;border:1px solid var(--line);border
   <button type="button" class="spin" id="spinL" aria-label="의자를 왼쪽으로 돌리기">◀ 돌리기</button>
   <div class="mid"><b id="gName"></b><div class="gbar"><i id="gBar"></i></div><small>동물 위를 누르고 문지르면 바람 · 빈 곳을 끌면 둘러보기 · 파란 점은 아직 젖은 곳</small></div>
   <button type="button" class="spin" id="spinR" aria-label="의자를 오른쪽으로 돌리기">돌리기 ▶</button>
+  <div class="zoom"><button type="button" id="zIn" aria-label="가까이 보기">＋</button><button type="button" id="zOut" aria-label="멀리 보기">－</button></div>
   <button type="button" class="stop" id="gStop">그만 말리기</button>
 </div>
 <div class="toast glass" id="toast"></div>
@@ -639,7 +646,6 @@ function seatFriend(seat, seq, enter, keepOld){
   placeSeated(seat);
   seat.path = seat.path || pathFor(CHAIRS[seat.i]);
   if (enter){ seat.a.root.position.copy(DOOR_IN); }
-  seat.label && (seat.label.querySelector("b").textContent = sp.name);
 }
 function placeSeated(seat){
   const c = CHAIRS[seat.i];
@@ -731,12 +737,12 @@ function dropOther(id){ const o = others.get(id); if (!o) return; scene.remove(o
 
 /* ================= labels ================= */
 seats.forEach(s => {
-  const el = document.createElement("div"); el.className = "pin glass"; el.innerHTML = "<b></b><small></small><div class='bar'><i></i></div>";
+  const el = document.createElement("div"); el.className = "pin glass"; el.innerHTML = "<small></small><div class='bar'><i></i></div>";
   $("labels").appendChild(el); s.label = el;
 });
 const sayEl = document.createElement("div"); sayEl.className = "say glass"; document.body.appendChild(sayEl);
 let sayUntil = 0, saySeat = -1;
-function say(seat, text){ sayEl.innerHTML = ""; const b = document.createElement("b"); b.textContent = seat.a.sp.name; sayEl.appendChild(b); sayEl.appendChild(document.createTextNode(text)); sayUntil = performance.now() + 4200; saySeat = seat.i; }
+function say(seat, text){ sayEl.innerHTML = ""; sayEl.appendChild(document.createTextNode(text)); sayUntil = performance.now() + 4200; saySeat = seat.i; }
 function emoteEl(){ const el = document.createElement("div"); el.className = "emote"; $("labels").appendChild(el); return el; }
 const myEmote = emoteEl();
 function nearestSeat(pos, maxD){ let best = -1, bd = maxD; seats.forEach(s => { if (!s.a || s.state !== "sit") return; const c = CHAIRS[s.i]; const d = Math.hypot(pos.x - c.x, pos.z - c.z); if (d < bd){ bd = d; best = s.i; } }); return best; }
@@ -807,24 +813,46 @@ function setBlowPoint(h){
 }
 // Grooming: click a friend once to stand beside its chair. Camera and avatar stay put;
 // pressing on the friend blows air there, dragging elsewhere looks around the friend.
-const groom = { seat:-1, pending:-1, yaw:0, pitch:.38, dist:1.9 };
-function groomSpot(i){ const c = CHAIRS[i]; const f = chairFront(c, -.8); const lat = c.x >= 0 ? -1 : 1; return new THREE.Vector3(f.x + lat*.55, 0, f.z); }
+const groom = { seat:-1, pending:-1, yaw:0, pitch:.6, dist:3.1 };
+function groomSpot(i){ const c = CHAIRS[i]; const f = chairFront(c, -.95); const lat = c.x >= 0 ? -1 : 1; return new THREE.Vector3(f.x + lat*.65, 0, f.z); }
 function enterGroom(i){
   const s = seats[i]; if (!s || !s.a || s.state !== "sit") return;
   myAct = null; pendingHug = -1;
   const st = groomSpot(i);
   if (P.pos.distanceTo(st) > .3){ groom.pending = i; groom.seat = -1; routeTo(st); $("groom").hidden = true; return; }
   groom.pending = -1; groom.seat = i;
-  const c = CHAIRS[i]; groom.yaw = c.face + Math.PI + (c.x >= 0 ? .6 : -.6);   // look from the side opposite the avatar groom.pitch = .38; groom.dist = 1.9;
+  const c = CHAIRS[i]; groom.yaw = c.face + Math.PI + (c.x >= 0 ? .6 : -.6);   // look from the side opposite the avatar groom.pitch = .6; groom.dist = 3.1;
   $("groom").hidden = false; $("acts").hidden = true; $("hint").style.opacity = "0";
 }
 function exitGroom(){ groom.seat = -1; groom.pending = -1; blow.holding = false; $("groom").hidden = true; $("acts").hidden = false; }
-function spinChair(dir){ if (groom.seat < 0) return; const s = seats[groom.seat]; s.spinGoal = (s.spinGoal || 0) + dir*Math.PI/4; dirtySeats.add(s.i); }
+function spinChair(dir){ if (groom.seat < 0) return; const s = seats[groom.seat]; s.spinGoal = (s.spinGoal || 0) + dir*Math.PI/4; dirtySeats.add(s.i); groom.dist = Math.max(groom.dist, 3.1); }
 $("gStop").addEventListener("click", exitGroom);
 $("spinL").addEventListener("click", () => spinChair(-1));
 $("spinR").addEventListener("click", () => spinChair(1));
+$("zIn").addEventListener("click", () => { groom.dist = clamp(groom.dist - .5, 2.0, 5.0); });
+$("zOut").addEventListener("click", () => { groom.dist = clamp(groom.dist + .5, 2.0, 5.0); });
+// two fingers on a phone: pinch to zoom, move together to look around
+const touches = new Map(); let pinch = null;
+function pinchInfo(){ const [a, b] = [...touches.values()]; return { d:Math.hypot(a.x - b.x, a.y - b.y), cx:(a.x + b.x)/2, cy:(a.y + b.y)/2 }; }
 canvas.addEventListener("pointerdown", e => {
-  if (!entered) return;
+  if (e.pointerType !== "touch") return;
+  touches.set(e.pointerId, { x:e.clientX, y:e.clientY });
+  if (touches.size === 2){ pinch = pinchInfo(); down = null; blow.holding = false; }
+}, true);
+canvas.addEventListener("pointermove", e => {
+  if (!touches.has(e.pointerId)) return;
+  touches.set(e.pointerId, { x:e.clientX, y:e.clientY });
+  if (touches.size === 2 && pinch){
+    const n = pinchInfo(), k = pinch.d/Math.max(20, n.d), dx = n.cx - pinch.cx, dy = n.cy - pinch.cy;
+    if (groom.seat >= 0){ groom.dist = clamp(groom.dist*k, 2.0, 5.0); groom.yaw -= dx*.006; groom.pitch = clamp(groom.pitch + dy*.004, .05, 1.1); }
+    else { wantDist = clamp(wantDist*k, 1.6, 5); camYaw -= dx*.005; camPitch = clamp(camPitch + dy*.004, .08, 1.2); }
+    pinch = n; e.stopImmediatePropagation();
+  }
+}, true);
+const touchEnd = e => { touches.delete(e.pointerId); if (touches.size < 2) pinch = null; };
+canvas.addEventListener("pointerup", touchEnd, true); canvas.addEventListener("pointercancel", touchEnd, true);
+canvas.addEventListener("pointerdown", e => {
+  if (!entered || pinch) return;
   canvas.setPointerCapture(e.pointerId); unlockAudio();
   const h = pickAt(e, false), hitSeat = h ? h.object.userData.seat : undefined;
   if (groom.seat >= 0 && hitSeat === groom.seat){
@@ -833,7 +861,7 @@ canvas.addEventListener("pointerdown", e => {
   down = { x:e.clientX, y:e.clientY, moved:false, blow:false, seat:hitSeat };
 });
 canvas.addEventListener("pointermove", e => {
-  if (!entered) return;
+  if (!entered || pinch) return;
   if (down && down.blow){ const h = pickAt(e, false); if (h && h.object.userData.seat === groom.seat) setBlowPoint(h); return; }
   if (down){
     const dx = e.clientX - down.x, dy = e.clientY - down.y;
@@ -856,7 +884,7 @@ canvas.addEventListener("pointerup", e => {
   down = null; blow.holding = false;
 });
 canvas.addEventListener("pointercancel", () => { down = null; blow.holding = false; canvas.classList.remove("dragging"); });
-canvas.addEventListener("wheel", e => { e.preventDefault(); if (groom.seat >= 0) groom.dist = clamp(groom.dist + e.deltaY*.002, 1.0, 3.2); else wantDist = clamp(wantDist + e.deltaY*.0025, 1.6, 5); }, { passive:false });
+canvas.addEventListener("wheel", e => { e.preventDefault(); if (groom.seat >= 0) groom.dist = clamp(groom.dist + e.deltaY*.002, 2.0, 5.0); else wantDist = clamp(wantDist + e.deltaY*.0025, 1.6, 5); }, { passive:false });
 addEventListener("keydown", e => { if (e.target.tagName === "INPUT") return; const k = e.key.toLowerCase();
   if (groom.seat >= 0){ if (k === "q") spinChair(-1); if (k === "e") spinChair(1); if (k === "escape") exitGroom(); }
   if (["w","a","s","d","arrowup","arrowdown","arrowleft","arrowright"].includes(k)){ if (groom.seat >= 0) exitGroom(); keys.add(k); e.preventDefault(); } });
@@ -1118,7 +1146,7 @@ function frame(){
         // the dry friend heads home on its own; the next friend starts walking in right away
         a.pivot.position.y = 0; leavers.push({ a, path:s.path, t:0 });
         seatFriend(s, s.seq + 1, true, true); dirtySeats.add(s.i); sendState();
-        if (Math.hypot(P.pos.x - CHAIRS[s.i].x, P.pos.z - CHAIRS[s.i].z) < 8) toast(`새 친구 ${s.a.sp.name}가 들어오고 있어요`);
+        if (Math.hypot(P.pos.x - CHAIRS[s.i].x, P.pos.z - CHAIRS[s.i].z) < 8) toast("새 친구가 들어오고 있어요");
       }
     } else if (s.state === "leave"){
       const d = s.path.total - s.t*WALK, h = alongPath(s.path, d, a.root.position);
@@ -1173,7 +1201,7 @@ function frame(){
       if (avg < .06){
         s.state = "happy"; s.t = 0; for (let k=0;k<TUFTS;k++) a.wet[k] = 0; a.dirty = true;
         doneCount++; $("doneN").textContent = doneCount; dirtySeats.add(s.i);
-        if (Math.hypot(P.pos.x - c0(s).x, P.pos.z - c0(s).z) < 8){ toast(`${a.sp.name}가 보송해져서 숲으로 돌아가요`); say(s, "고마워요! 이제 하나도 안 추워요."); }
+        if (Math.hypot(P.pos.x - c0(s).x, P.pos.z - c0(s).z) < 8){ toast("보송해진 친구가 숲으로 돌아가요"); say(s, "고마워요! 이제 하나도 안 추워요."); }
       }
     }
     // label over the nearest chairs only
@@ -1183,7 +1211,6 @@ function frame(){
     const vis = v3.z < 1 && Math.abs(v3.x) < 1.05 && v3.y < .92 && v3.y > -1 && a.root.position.distanceTo(camera.position) < 8;
     pin.style.opacity = vis ? 1 : 0;
     pin.style.transform = `translate(${(v3.x*.5 + .5)*innerWidth}px,${(-v3.y*.5 + .5)*innerHeight}px) translate(-50%,-100%)`;
-    pin.querySelector("b").textContent = a.sp.name;
     const pct = Math.min(100, Math.floor(Math.min(1, dry/.94)*100));
     pin.querySelector("small").textContent = s.state === "enter" ? "들어오는 중" : s.state === "sit" ? `보송함 ${pct}%` : "다 말랐어요!";
     pin.querySelector("i").style.width = (s.state === "enter" ? 0 : pct) + "%";
@@ -1213,12 +1240,13 @@ function frame(){
     const ctr = tmp.set(0, a.bodyR[1]*1.25, 0); a.root.localToWorld(ctr);
     look.lerp(ctr, Math.min(1, dt*5));
     const want = new THREE.Vector3(look.x + Math.sin(groom.yaw)*Math.cos(groom.pitch)*groom.dist, look.y + Math.sin(groom.pitch)*groom.dist, look.z + Math.cos(groom.yaw)*Math.cos(groom.pitch)*groom.dist);
+    want.x = clamp(want.x, -RW/2 + .3, RW/2 - .3); want.z = clamp(want.z, BZ + .3, FZ - .3); want.y = clamp(want.y, .5, RH - .15);
     camera.position.lerp(want, Math.min(1, dt*6));
     camera.lookAt(look);
     camYaw = groom.yaw; camPitch = Math.max(.2, groom.pitch); wantDist = camDist = 3;
     // progress bar and the wettest spots
     const pct = Math.min(100, Math.floor(Math.min(1, (1 - a.avg)/.94)*100));
-    $("gName").textContent = `${a.sp.name} · 보송함 ${pct}%`; $("gBar").style.width = pct + "%";
+    $("gName").textContent = `보송함 ${pct}%`; $("gBar").style.width = pct + "%";
     markT -= dt;
     if (markT <= 0){ markT = .35; const order = [...a.wet].map((w, k) => [w, k]).filter(x => x[0] > .2).sort((x, y) => y[0] - x[0]).slice(0, 14);
       for (let m=0;m<MARK.n;m++){ if (m < order.length){ v3.copy(a.anchors[order[m][1]]); a.pivot.localToWorld(v3); MARK.pos.set([v3.x, v3.y, v3.z], m*3); } else MARK.pos.set([0, -99, 0], m*3); }
