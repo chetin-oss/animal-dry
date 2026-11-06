@@ -913,8 +913,23 @@ function turn(cur, goal, k){ let d = goal - cur; d = Math.atan2(Math.sin(d), Mat
 let soundOn = store.get("ds.sound") !== "off", actx = null, dryGain = null, rainGain = null;
 function soundUI(){ $("soundBtn").textContent = soundOn ? "소리 켜짐" : "소리 꺼짐"; $("soundBtn").setAttribute("aria-pressed", String(soundOn)); }
 soundUI();
+// iPhone mutes web audio in silent mode; a looping silent <audio> switches the page to
+// "media playback", which plays through the silent switch the way a video does.
+let keepAlive = null;
+function silentWav(){
+  const n = 4000, b = new Uint8Array(44 + n), v = new DataView(b.buffer);
+  const S = (o, s) => { for (let i=0;i<s.length;i++) b[o+i] = s.charCodeAt(i); };
+  S(0,"RIFF"); v.setUint32(4, 36+n, true); S(8,"WAVEfmt "); v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true);
+  v.setUint32(24,8000,true); v.setUint32(28,8000,true); v.setUint16(32,1,true); v.setUint16(34,8,true); S(36,"data"); v.setUint32(40,n,true); b.fill(128, 44);
+  let s = ""; for (let i=0;i<b.length;i++) s += String.fromCharCode(b[i]); return "data:audio/wav;base64," + btoa(s);
+}
 function unlockAudio(){
   if (!soundOn) return;
+  try { if (navigator.audioSession) navigator.audioSession.type = "playback"; } catch(e){}
+  try {
+    if (!keepAlive){ keepAlive = new Audio(silentWav()); keepAlive.loop = true; keepAlive.setAttribute("playsinline", ""); }
+    const pr = keepAlive.play(); if (pr && pr.catch) pr.catch(() => {});
+  } catch(e){}
   if (actx){ if (actx.state !== "running") actx.resume().catch(() => {}); return; }
   try {
     actx = new (window.AudioContext || window.webkitAudioContext)();
@@ -929,7 +944,7 @@ function unlockAudio(){
     rainGain.gain.setTargetAtTime(.22, actx.currentTime, 1.5);
     // dryer: the recorded, softened dryer loop
     dryGain = actx.createGain(); dryGain.gain.value = 0; dryGain.connect(master);
-    fetch("dryer-22k.wav").then(r => r.arrayBuffer()).then(ab => actx.decodeAudioData(ab)).then(ab => {
+    fetch("dryer-22k.wav").then(r => r.arrayBuffer()).then(ab => new Promise((ok, no) => { const r = actx.decodeAudioData(ab, ok, no); if (r && r.catch) r.catch(no); })).then(ab => {
       const s = actx.createBufferSource(); s.buffer = ab; s.loop = true; s.connect(dryGain); s.start();
     }).catch(() => {
       const n2 = actx.sampleRate*3, b2 = actx.createBuffer(1, n2, actx.sampleRate), d2 = b2.getChannelData(0); let l1 = 0;
@@ -938,9 +953,12 @@ function unlockAudio(){
     });
   } catch(e){ actx = null; }
 }
+// iOS only unlocks audio at the end of a tap, so try again on every finished touch
+["touchend", "click", "keydown"].forEach(ev => addEventListener(ev, () => { if (entered) unlockAudio(); }, { passive:true }));
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && entered) unlockAudio(); });
 $("soundBtn").addEventListener("click", () => {
   soundOn = !soundOn; store.set("ds.sound", soundOn ? "on" : "off"); soundUI();
-  if (soundOn) unlockAudio(); else if (actx) actx.suspend().catch(() => {});
+  if (soundOn) unlockAudio(); else { if (actx) actx.suspend().catch(() => {}); if (keepAlive) keepAlive.pause(); }
 });
 
 /* ================= intro ================= */
