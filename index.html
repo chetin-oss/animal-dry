@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#16141c">
 <title>동물 드라이샵</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18,7 +18,8 @@
   color-scheme:dark;
 }
 *{box-sizing:border-box}
-html,body{height:100%;margin:0;overflow:hidden}
+html,body{height:100%;margin:0;overflow:hidden;touch-action:none;overscroll-behavior:none;-webkit-text-size-adjust:100%}
+button,input,a{touch-action:manipulation}
 [hidden]{display:none!important}
 body{background:var(--night);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased}
 #stage{position:fixed;inset:0;touch-action:none;cursor:grab;display:block;width:100%;height:100%}
@@ -170,6 +171,11 @@ kbd{font-family:var(--f-body);font-size:11px;border:1px solid var(--line);border
 <script>
 (function(){
 "use strict";
+// keep the browser from zooming the whole page (iPhone ignores the viewport setting, so block its gestures)
+["gesturestart","gesturechange","gestureend"].forEach(ev => document.addEventListener(ev, e => e.preventDefault(), { passive:false }));
+document.addEventListener("touchmove", e => { if (e.touches.length > 1 || e.scale && e.scale !== 1) e.preventDefault(); }, { passive:false });
+let lastTouchEnd = 0;
+document.addEventListener("touchend", e => { const now = Date.now(); if (now - lastTouchEnd < 320 && !(e.target.closest && e.target.closest("input,button,a"))) e.preventDefault(); lastTouchEnd = now; }, { passive:false });
 if (!window.THREE){ document.body.insertAdjacentHTML("beforeend", '<p class="err">3D 엔진을 불러오지 못했어요. 새로고침해 주세요.</p>'); return; }
 const $ = id => document.getElementById(id);
 const store = { get(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }, set(k,v){ try { localStorage.setItem(k,v); } catch(e){} } };
@@ -825,10 +831,14 @@ function enterGroom(i){
   $("groom").hidden = false; $("acts").hidden = true; $("hint").style.opacity = "0";
 }
 function exitGroom(){ groom.seat = -1; groom.pending = -1; blow.holding = false; $("groom").hidden = true; $("acts").hidden = false; }
-function spinChair(dir){ if (groom.seat < 0) return; const s = seats[groom.seat]; s.spinGoal = (s.spinGoal || 0) + dir*Math.PI/4; dirtySeats.add(s.i); groom.dist = Math.max(groom.dist, 3.1); }
+function spinChair(dir, step){ if (groom.seat < 0) return; const s = seats[groom.seat]; s.spinGoal = (s.spinGoal || 0) + dir*(step || Math.PI/4); groom.dist = Math.max(groom.dist, 3.1); }
+let spinHold = null;
+function holdSpin(btn, dir){
+  btn.addEventListener("pointerdown", e => { e.preventDefault(); spinChair(dir); clearInterval(spinHold); spinHold = setInterval(() => spinChair(dir, .12), 60); });
+  ["pointerup","pointerleave","pointercancel"].forEach(ev => btn.addEventListener(ev, () => { clearInterval(spinHold); spinHold = null; }));
+}
 $("gStop").addEventListener("click", exitGroom);
-$("spinL").addEventListener("click", () => spinChair(-1));
-$("spinR").addEventListener("click", () => spinChair(1));
+holdSpin($("spinL"), -1); holdSpin($("spinR"), 1);
 $("zIn").addEventListener("click", () => { groom.dist = clamp(groom.dist - .5, 2.0, 5.0); });
 $("zOut").addEventListener("click", () => { groom.dist = clamp(groom.dist + .5, 2.0, 5.0); });
 // two fingers on a phone: pinch to zoom, move together to look around
@@ -969,7 +979,7 @@ function onState(d){
     const [i, sq, w, sp] = row; if (!Number.isInteger(i) || i < 0 || i >= seats.length || !Number.isInteger(sq) || sq < 0 || sq > 1e7) return;
     const s = seats[i];
     if (sq > s.seq){ seatFriend(s, sq, false); }
-    if (sq === s.seq && s.a && s.state === "sit"){ mergeWet(s.a, w); if (Number.isInteger(sp) && Math.abs(sp) < 1000 && !(groom.seat === i && dirtySeats.has(i))) s.spinGoal = sp*Math.PI/4; }
+    if (sq === s.seq && s.a && s.state === "sit"){ mergeWet(s.a, w); }
   });
 }
 function renderPeople(){
