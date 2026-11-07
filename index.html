@@ -1003,7 +1003,10 @@ function onState(d){
 function renderPeople(){
   const list = [{ n:MEO.nick, c:MEO.top, me:true, b:blow.on }];
   others.forEach(o => { if (o.data && o.data.in) list.push({ n:cleanName(o.data.n) || "미용사", c:/^#[0-9a-f]{6}$/i.test(o.data.c || "") ? o.data.c : "#999", b:o.data.b >= 0 }); });
-  $("cnt").textContent = !net ? "혼자 있어요" : list.length > 1 ? `지금 ${list.length}명이 말리는 중` : "아직 혼자예요 · 링크를 공유해 보세요";
+  const staffN = Math.max(0, STAFF.length - (list.length - 1));
+  npcs.slice(0, staffN).forEach(n => list.push({ n:n.n, c:n.top, b:n.seat >= 0 }));
+  const realN = list.length - staffN;
+  $("cnt").textContent = realN > 1 ? `지금 ${realN}명 + 직원 ${staffN}명이 말리는 중` : `직원 ${staffN}명과 함께 말리는 중`;
   const ul = $("plist"); ul.textContent = "";
   list.slice(0, 7).forEach(p => { const li = document.createElement("li"); const i = document.createElement("i"); i.style.background = p.c; li.appendChild(i); li.appendChild(document.createTextNode(p.n)); if (p.me){ const em = document.createElement("em"); em.textContent = "나"; li.appendChild(em); } else if (p.b){ const em = document.createElement("em"); em.textContent = "말리는 중"; li.appendChild(em); } ul.appendChild(li); });
 }
@@ -1045,6 +1048,80 @@ const nozzleWorld = new THREE.Vector3();
 let lodT = 0;
 const c0 = s => CHAIRS[s.i];
 
+
+/* ================= staff: a few groomers so nobody dries alone ================= */
+const STAFF = [
+  { n:"직원 해나", top:"#9fd0a6", hair:"#2b1d17", lines:["오늘 비가 정말 많이 오네요.","같이 말리니까 금방 끝나요!"] },
+  { n:"직원 도윤", top:"#8fb7e8", hair:"#5a3a26", lines:["꼬리는 바람을 아래에서 위로!","새 친구가 또 들어왔어요."] },
+  { n:"직원 미르", top:"#e98a8a", hair:"#a7774c", lines:["얼굴 쪽은 의자를 돌려서 말려 보세요.","보들보들해졌다!"] },
+  { n:"직원 소라", top:"#c9a6e8", hair:"#3a3a40", lines:["드라이어 소리 좋지 않아요?","천천히 해도 괜찮아요."] }
+];
+const npcs = STAFF.map((s, k) => {
+  const g = makeAvatar({ top:s.top, hair:s.hair });
+  const label = document.createElement("div"); label.className = "tag"; label.textContent = s.n; label.style.borderColor = s.top; $("labels").appendChild(label);
+  const start = new THREE.Vector3(k % 2 ? 9.4 : -9.4, 0, -6 + k*3.5);
+  return { ...s, g, label, emote:emoteEl(), pos:start, head:0, speed:0, route:[], seat:-1, work:0, lp:new THREE.Vector3(), lpT:0, act:null, sayT:6 + k*5 + Math.random()*8, wait:Math.random()*3 };
+});
+function npcRoute(n, target){
+  n.route = [];
+  if (crossesIsland(n.pos, target)){ const sx = (n.pos.x + target.x) >= 0 ? 1 : -1, ax = sx*9.4; n.route.push(new THREE.Vector3(ax, 0, n.pos.z), new THREE.Vector3(ax, 0, target.z)); }
+  n.route.push(target.clone());
+}
+function npcPick(n, active){
+  const taken = new Set(active.filter(m => m !== n && m.seat >= 0).map(m => m.seat)); if (groom.seat >= 0) taken.add(groom.seat);
+  const cand = seats.filter(s => s.a && s.state === "sit" && !taken.has(s.i)).map(s => [s, s.a.root.position.distanceTo(n.pos) + Math.random()*6]).sort((a, b) => a[1] - b[1]);
+  if (!cand.length) return;
+  n.seat = cand[0][0].i; n.work = 0; npcRoute(n, groomSpot(n.seat));
+}
+function updateNpcs(dt, T, blowers, people){
+  const want = Math.max(0, STAFF.length - people);     // fewer staff when more real people are here
+  const active = npcs.slice(0, want);
+  npcs.forEach((n, k) => {
+    const on = k < want && entered;
+    n.g.visible = on; n.g.userData.rig.dryer.visible = on;
+    if (!on){ n.label.style.opacity = 0; placeEmote(n.emote, n.pos, null); n.seat = -1; return; }
+    let spd = 0, tgt = null;
+    if (n.seat >= 0 && (!seats[n.seat].a || seats[n.seat].state !== "sit" || groom.seat === n.seat)){ n.seat = -1; n.route = []; n.act = { k:"clap", t:0 }; n.wait = 2; }
+    if (n.route.length){
+      const g = n.route[0], dx = g.x - n.pos.x, dz = g.z - n.pos.z, d = Math.hypot(dx, dz);
+      if (d < .06) n.route.shift(); else { spd = Math.min(1.9, d*3 + .4); n.pos.x += dx/d*spd*dt; n.pos.z += dz/d*spd*dt; n.head = turn(n.head, Math.atan2(dx, dz), Math.min(1, dt*8)); }
+    } else if (n.seat >= 0){
+      const s = seats[n.seat], a = s.a;
+      n.work += dt; n.lpT -= dt;
+      if (n.lpT <= 0){
+        // aim at one of the wettest spots, moving on every second or so
+        let best = -1, bw = .15; for (let k2=0; k2<12; k2++){ const q = (Math.random()*TUFTS)|0; if (a.wet[q] > bw){ bw = a.wet[q]; best = q; } }
+        if (best < 0){ for (let q=0; q<TUFTS; q++) if (a.wet[q] > .1){ best = q; break; } }
+        if (best >= 0) n.lp.copy(a.anchors[best]); n.lpT = .9 + Math.random()*.8;
+        // turn the chair now and then to reach the front
+        if (Math.random() < .12){ s.spinGoal = (s.spinGoal || 0) + (Math.random() < .5 ? -1 : 1)*Math.PI/4; }
+      }
+      a.pivot.updateMatrixWorld(); tgt = a.pivot.localToWorld(n.lp.clone());
+      const wob = n.lp.clone().add(new THREE.Vector3(Math.sin(T*3 + k)*.06, Math.cos(T*2.3 + k)*.05, 0));
+      blowers.push({ seat:n.seat, lp:wob, from:n.g.userData.rig.dryer.position, power:.55, mine:true });
+      n.head = turn(n.head, Math.atan2(tgt.x - n.pos.x, tgt.z - n.pos.z), Math.min(1, dt*6));
+    } else {
+      n.wait -= dt; if (n.wait <= 0) npcPick(n, active);
+    }
+    // a hello when you walk past, and a line now and then
+    n.sayT -= dt;
+    if (!n.act && Math.hypot(P.pos.x - n.pos.x, P.pos.z - n.pos.z) < 1.8 && !n.greeted){ n.greeted = true; n.act = { k:"wave", t:0 }; }
+    if (Math.hypot(P.pos.x - n.pos.x, P.pos.z - n.pos.z) > 4) n.greeted = false;
+    if (n.act){ n.act.t += dt; if (n.act.t > ACTS[n.act.k].dur) n.act = null; }
+    n.speed = lerp(n.speed, spd, .2);
+    n.g.position.copy(n.pos); n.g.rotation.y = n.head;
+    animRig(n.g, n.speed, dt, !!tgt && !n.act, n.act); dryerPose(n.g, n.pos, n.head, n.act ? null : tgt, !!tgt && !n.act, T);
+    placeEmote(n.emote, n.pos, n.act);
+    v3.set(n.pos.x, 1.62, n.pos.z).project(camera);
+    const close = n.pos.distanceTo(camera.position) < 12;
+    const vis = v3.z < 1 && Math.abs(v3.x) < 1.1 && Math.abs(v3.y) < 1.1 && close;
+    if (n.sayT <= 0 && vis && !n.act){ n.sayT = 14 + Math.random()*14; n.label.textContent = n.n + " · " + n.lines[(Math.random()*n.lines.length)|0]; n.sayUntil = T + 4; }
+    if (n.sayUntil && T > n.sayUntil){ n.label.textContent = n.n; n.sayUntil = 0; }
+    n.label.style.opacity = vis ? 1 : 0;
+    n.label.style.transform = `translate(${(v3.x*.5 + .5)*innerWidth}px,${(-v3.y*.5 + .5)*innerHeight}px) translate(-50%,-100%)`;
+  });
+  return want;
+}
 function placeEmote(el, pos, act){
   if (!act){ el.style.opacity = 0; return; }
   v3.set(pos.x, 1.95, pos.z).project(camera);
@@ -1146,6 +1223,8 @@ function frame(){
     }
     for (const id of [...others.keys()]) if (!live.has(id)) dropOther(id);
   }
+  let people = 0; others.forEach(o => { if (o.data && o.data.in) people++; });
+  const staffOn = updateNpcs(dt, T, blowers, people);
 
   // ---- friends ----
   doorOpen = Math.max(0, doorOpen - dt*.6);
