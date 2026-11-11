@@ -647,7 +647,7 @@ function seatFriend(seat, seq, enter, keepOld){
   const sp = speciesFor(seat.i, seq);
   seat.a = buildAnimal(sp, hash(seat.i*1000 + seq));
   scene.add(seat.a.root);
-  seat.spin = seat.spinGoal = 0; if (chairGroups[seat.i]) chairGroups[seat.i].rotation.y = CHAIRS[seat.i].face;
+  seat.spin = seat.spinGoal = 0; seat.midSaid = false; if (chairGroups[seat.i]) chairGroups[seat.i].rotation.y = CHAIRS[seat.i].face;
   seat.state = enter ? "enter" : "sit"; seat.t = 0; seat.sat = 0; seat.lineShown = false; seat.nextShake = 10 + Math.random()*12;
   placeSeated(seat);
   seat.path = seat.path || pathFor(CHAIRS[seat.i]);
@@ -687,6 +687,7 @@ function makeAvatar(o){
   g.userData.rig = rig; scene.add(g); return g;
 }
 function setAvatarLook(g, o){ const r = g.userData.rig; r.mats.top.color.set(o.top); r.mats.hair.color.set(o.hair); }
+const THIRDLINE = "역시 써드라인 드라이기가 빨리 마르네.";
 const ACTS = { wave:{ dur:2.2, say:"안녕하세요!" }, clap:{ dur:2.0, say:"짝짝짝!" }, hug:{ dur:3.0, say:"꼬옥~" } };
 let myAct = null, actCount = 0, pendingHug = -1;
 function animRig(g, speed, dt, blowing, act){
@@ -1305,10 +1306,14 @@ function frame(){
           emit(DROP, v3.x, v3.y, v3.z, dir.x*2.4, 1 + Math.random(), dir.z*2.4, 1.2); } }
       if (s.shakeT > 0){ s.shakeT -= dt; a.pivot.rotation.y = Math.sin(s.shakeT*40)*.35*(s.shakeT/.8); } else a.pivot.rotation.y = 0;
       if (a.near && Math.random() < dt*6*avg){ const an = a.anchors[(Math.random()*TUFTS)|0]; if (an.y < a.bodyR[1]*1.2){ v3.copy(an); a.pivot.localToWorld(v3); emit(DROP, v3.x, v3.y, v3.z, 0, 0, 0, 2); } }
+      if (!s.midSaid && avg < .5 && blowers.some(b => b.seat === s.i)){
+        s.midSaid = true;
+        if (Math.random() < .35 && Math.hypot(P.pos.x - c0(s).x, P.pos.z - c0(s).z) < 6) say(s, THIRDLINE);
+      }
       if (avg < .06){
         s.state = "happy"; s.t = 0; for (let k=0;k<TUFTS;k++) a.wet[k] = 0; a.dirty = true;
         doneCount++; $("doneN").textContent = doneCount; dirtySeats.add(s.i);
-        if (Math.hypot(P.pos.x - c0(s).x, P.pos.z - c0(s).z) < 8){ toast("보송해진 친구가 숲으로 돌아가요"); say(s, "고마워요! 이제 하나도 안 추워요."); }
+        if (Math.hypot(P.pos.x - c0(s).x, P.pos.z - c0(s).z) < 8){ toast("보송해진 친구가 숲으로 돌아가요"); say(s, Math.random() < .45 ? THIRDLINE : "고마워요! 이제 하나도 안 추워요."); }
       }
     }
     // label over the nearest chairs only
