@@ -218,7 +218,7 @@ kbd{font-family:var(--f-body);font-size:11px;border:1px solid var(--line);border
 <div class="groom glass" id="groom" hidden>
   <button type="button" class="spin" id="spinL" aria-label="의자를 왼쪽으로 돌리기">◀ 돌리기</button>
   <button type="button" class="heat hot" id="heatBtn" hidden>열풍</button>
-  <div class="mid"><b id="gName"></b><div class="gbar"><i id="gBar"></i></div><div class="abar" id="abarW" hidden><i id="abar"></i></div><small>동물 위를 누르고 문지르면 바람 · 빈 곳을 끌면 둘러보기 · 파란 점은 아직 젖은 곳</small></div>
+  <div class="mid"><b id="gName"></b><div class="gbar"><i id="gBar"></i></div><div class="abar" id="abarW" hidden><i id="abar"></i></div><small>동물을 문지르면 바람 · 두 손가락이나 ◀▶로 돌려 보기 · 파란 점은 아직 젖은 곳</small></div>
   <button type="button" class="spin" id="spinR" aria-label="의자를 오른쪽으로 돌리기">돌리기 ▶</button>
   <div class="zoom"><button type="button" id="zIn" aria-label="가까이 보기">＋</button><button type="button" id="zOut" aria-label="멀리 보기">－</button></div>
   <button type="button" class="stop" id="gStop">그만 말리기</button>
@@ -947,6 +947,18 @@ function routeTo(target){
   P.route.push(target.clone()); P.goal = P.route.shift(); P.goalT = 0;
 }
 function standSpot(i){ const c = CHAIRS[i]; const off = ((hash(MEO.nick.length*97 + i) % 100)/100 - .5)*.9; const f = chairFront(c, -.95); return new THREE.Vector3(f.x + off, 0, f.z); }
+// a ray from the camera toward the groomed friend, pulled from the touch point toward its middle until it lands on fur
+function nearestFurHit(e){
+  const s = seats[groom.seat]; if (!s || !s.a || s.state !== "sit") return null;
+  const r = canvas.getBoundingClientRect(); const tx = (e.clientX - r.left)/r.width*2 - 1, ty = -(e.clientY - r.top)/r.height*2 + 1;
+  const ctr = new THREE.Vector3(0, s.a.bodyR[1]*1.1, 0); s.a.root.localToWorld(ctr); ctr.project(camera);
+  s.a.hits.forEach(h => { h.userData.seat = s.i; });
+  for (let k=0; k<=10; k++){
+    const f = k/10; ndc.set(tx + (ctr.x - tx)*f, ty + (ctr.y - ty)*f); ray.setFromCamera(ndc, camera);
+    const hit = ray.intersectObjects(s.a.hits, false)[0]; if (hit) return hit;
+  }
+  return null;
+}
 function setBlowPoint(h){
   const s = seats[h.object.userData.seat]; if (!s || !s.a) return;
   blow.seat = s.i; s.a.pivot.updateMatrixWorld(); blow.lp.copy(h.point); s.a.pivot.worldToLocal(blow.lp);
@@ -1002,11 +1014,16 @@ canvas.addEventListener("pointerdown", e => {
   if (groom.seat >= 0 && hitSeat === groom.seat){
     blow.holding = true; setBlowPoint(h); down = { x:e.clientX, y:e.clientY, moved:false, blow:true }; return;
   }
+  // on a phone, one finger while grooming always dries: a touch just off the fur aims at the nearest spot
+  // instead of swinging the whole view around (two fingers still turn and zoom)
+  if (groom.seat >= 0 && e.pointerType !== "mouse"){
+    const g = nearestFurHit(e); blow.holding = true; if (g) setBlowPoint(g); down = { x:e.clientX, y:e.clientY, moved:false, blow:true }; return;
+  }
   down = { x:e.clientX, y:e.clientY, moved:false, blow:false, seat:hitSeat };
 });
 canvas.addEventListener("pointermove", e => {
   if (!entered || pinch) return;
-  if (down && down.blow){ const h = pickAt(e, false); if (h && h.object.userData.seat === groom.seat) setBlowPoint(h); return; }
+  if (down && down.blow){ const h = pickAt(e, false); if (h && h.object.userData.seat === groom.seat) setBlowPoint(h); else if (e.pointerType !== "mouse"){ const g = nearestFurHit(e); if (g) setBlowPoint(g); } return; }
   if (down){
     const dx = e.clientX - down.x, dy = e.clientY - down.y;
     if (!down.moved && Math.hypot(dx, dy) > 5){ down.moved = true; canvas.classList.add("dragging"); }
