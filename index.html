@@ -228,7 +228,7 @@ kbd{font-family:var(--f-body);font-size:11px;border:1px solid var(--line);border
     <h2>비에 젖은 야생동물들을<br>다 같이 말려 주세요</h2>
     <div class="modes" role="group" aria-label="모드">
       <button type="button" data-mode="heal" aria-pressed="true"><b>힐링 모드</b><small>천천히, 다 같이 말려요</small></button>
-      <button type="button" data-mode="survival" aria-pressed="false"><b>얼마나 버틸까</b><small>젖은 친구가 쌓여 추위가 꽉 차면 끝 · 기록 순위</small></button>
+      <button type="button" data-mode="survival" aria-pressed="false"><b>얼마나 버틸까</b><small>젖은 친구가 5마리 넘게 쌓이면 추위가 올라가요 · 기록 순위</small></button>
       <button type="button" data-mode="battle" aria-pressed="false"><b>드라이 대결 · vs 직원</b><small>3분 개인전 · 나와 직원 모두 각자 점수</small></button>
     </div>
     <div class="diff" id="diffRow" hidden><span>난이도</span><button type="button" data-d="easy" aria-pressed="false">쉬움</button><button type="button" data-d="normal" aria-pressed="true">보통</button><button type="button" data-d="hard" aria-pressed="false">어려움</button></div>
@@ -1236,10 +1236,11 @@ function updateSurvival(dt){
   if (battle.next <= 0 && empties.length){
     const pick = empties.map(s => [s, Math.hypot(P.pos.x - CHAIRS[s.i].x, P.pos.z - CHAIRS[s.i].z) + Math.random()*10]).sort((a, b) => a[1] - b[1])[0][0];
     seatFriend(pick, pick.seq + 1, true);
-    battle.next = Math.max(2.4, 11 - battle.t*.055) * (.8 + Math.random()*.4);
+    // tuned so a careful beginner lasts ~2-3 min and a fast groomer 7-10 min
+    battle.next = Math.max(8, 24 - battle.t*.03) * (.8 + Math.random()*.4);
   }
   const w = wetCount();
-  battle.cold = clamp(battle.cold + dt*(w - 3)*.0065, 0, 1);
+  battle.cold = clamp(battle.cold + dt*(w - 4)*.004, 0, 1);
   const pct = Math.floor(battle.cold*100);
   $("clock").textContent = `${Math.floor(battle.t/60)}:${String(Math.floor(battle.t%60)).padStart(2, "0")}`;
   $("clock").classList.toggle("hurry", battle.cold > .75);
@@ -1629,7 +1630,7 @@ function frame(){
         doneCount++; $("doneN").textContent = doneCount; dirtySeats.add(s.i);
         if (battle.on && battle.mode === "survival"){
           if (s.owner === "me"){ battle.stats.meDone++; if (s.ionHit) battle.stats.ionDone++; }
-          const melt = s.ionHit ? .08 : .05; battle.cold = Math.max(0, battle.cold - melt);
+          const melt = s.ionHit ? .1 : .07; battle.cold = Math.max(0, battle.cold - melt);
           toast(`보송! 추위 -${Math.round(melt*100)}%${s.ionHit ? " · 음이온 케어" : ""}`);
           if (Math.random() < .3) say(s, THIRDLINE);
         } else if (battle.on && s.owner && (s.owner === "me" || s.owner[0] === "n")){
