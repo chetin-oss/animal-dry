@@ -61,7 +61,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--amber);outline-
 .groom .gbar{height:10px;border-radius:9px;background:rgba(243,236,225,.14);overflow:hidden}
 .groom .gbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--rain),var(--amber));transition:width .2s}
 .groom .stop{border:0;background:var(--amber);color:var(--amber-ink);border-radius:12px;padding:10px 14px;font-family:var(--f-display);font-size:15px;white-space:nowrap}
-.modes{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .modes button{border:1px solid var(--line);background:var(--solid);border-radius:14px;padding:11px 12px;text-align:left;display:flex;flex-direction:column;gap:2px}
 .modes button b{font-family:var(--f-display);font-weight:400;font-size:17px}
 .modes button small{font-size:12px;color:var(--muted)}
@@ -221,7 +221,7 @@ kbd{font-family:var(--f-body);font-size:11px;border:1px solid var(--line);border
     <ul class="stats" id="rStats"></ul>
     <div class="lbsend" id="lbSendRow" hidden><input id="lbName" maxlength="10" autocomplete="off" aria-label="순위에 올릴 이름"><button type="button" class="cta" id="lbSend">순위에 올리기</button></div>
     <p class="lbnote" id="lbNote"></p>
-    <div class="row2"><button class="cta" id="again" type="button">한 판 더</button><button class="cta ghost" id="toHeal" type="button">힐링 모드로</button></div>
+    <div class="row2"><button class="cta" id="again" type="button">한 판 더</button><button class="cta ghost" id="toHeal" type="button">모드 고르기</button></div>
     <a class="buy" href="https://smartstore.naver.com/thirdline/products/12945665241" target="_blank" rel="noopener">빠르게 마르는 드라이기 보기</a>
   </div>
 </div>
@@ -231,8 +231,7 @@ kbd{font-family:var(--f-body);font-size:11px;border:1px solid var(--line);border
     <div class="eyebrow">RAINY NIGHT · DRY SHOP</div>
     <h2>비에 젖은 동물들을<br>다 같이 말려 주세요</h2>
     <div class="modes" role="group" aria-label="모드">
-      <button type="button" data-mode="heal" aria-pressed="true"><b>힐링 모드</b><small>천천히, 다 같이 말려요</small></button>
-      <button type="button" data-mode="survival" aria-pressed="false"><b>얼마나 버틸까</b><small>젖은 친구가 많을수록 추위가 빨리 차요 · 기록 순위</small></button>
+      <button type="button" data-mode="survival" aria-pressed="true"><b>얼마나 버틸까</b><small>젖은 친구가 많을수록 추위가 빨리 차요 · 기록 순위</small></button>
       <button type="button" data-mode="battle" aria-pressed="false"><b>드라이 대결 · vs 직원</b><small>3분 개인전 · 나와 직원 모두 각자 점수</small></button>
     </div>
     <div class="diff" id="diffRow" hidden><span>난이도</span><button type="button" data-d="easy" aria-pressed="false">쉬움</button><button type="button" data-d="normal" aria-pressed="true">보통</button><button type="button" data-d="hard" aria-pressed="false">어려움</button></div>
@@ -289,7 +288,7 @@ const speciesFor = (i, seq) => SPECIES[hash(i*7919 + seq*104729 + 13) % SPECIES.
 /* ================= renderer & scene ================= */
 const canvas = $("stage");
 const renderer = new THREE.WebGLRenderer({ canvas, antialias:true });
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setPixelRatio(Math.min(devicePixelRatio, innerWidth < 760 ? 1.25 : 1.5));
 renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = .8;
@@ -440,7 +439,23 @@ rain.frustumCulled = false; scene.add(rain);
 }
 
 /* ---- mirror islands and salon chairs ---- */
+// Many small static parts are merged into one mesh per material: far fewer draw calls on phones.
+function mergeParts(parts, mesh){
+  let n = 0; parts.forEach(p => { p.g = p.g.index ? p.g.toNonIndexed() : p.g; n += p.g.attributes.position.count; });
+  const pos = new Float32Array(n*3), nor = new Float32Array(n*3); let o = 0;
+  const v = new THREE.Vector3(), nm = new THREE.Matrix3();
+  parts.forEach(p => {
+    const P = p.g.attributes.position, N = p.g.attributes.normal; nm.getNormalMatrix(p.m);
+    for (let k=0;k<P.count;k++){ v.fromBufferAttribute(P, k).applyMatrix4(p.m); pos.set([v.x, v.y, v.z], (o+k)*3); v.fromBufferAttribute(N, k).applyMatrix3(nm).normalize(); nor.set([v.x, v.y, v.z], (o+k)*3); }
+    o += P.count;
+  });
+  const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.BufferAttribute(pos, 3)); g.setAttribute("normal", new THREE.BufferAttribute(nor, 3));
+  g.computeBoundingSphere(); return g;
+}
+const statics = new Map();   // material → parts
+function addStatic(geo, m, x, y, z, ry){ const o = new THREE.Object3D(); o.position.set(x, y, z); o.rotation.y = ry || 0; o.updateMatrix(); if (!statics.has(m)) statics.set(m, []); statics.get(m).push({ g:geo, m:o.matrix.clone() }); }
 const chairGroups = [];
+const BOTTLES = [0xe9b8c9, 0xbfe0d6, 0xf3dfb3].map(c => M({ color:c, roughness:.3 }));
 ISLAND_Z.forEach(zi => {
   const len = ISLAND_HALF*2;
   scene.add(at(box(len, .8, .9, mat.wainscot), 0, .4, zi));
@@ -449,29 +464,33 @@ ISLAND_Z.forEach(zi => {
   scene.add(at(box(len + .1, .06, .22, mat.frame), 0, 2.38, zi));
   const strip = box(len - .4, .03, .05, mat.lamp); strip.castShadow = false; scene.add(at(strip, 0, 2.43, zi));
   [-1, 1].forEach(side => CHAIR_X.forEach(x => {
-    const fr = new THREE.Mesh(new THREE.CircleGeometry(.62, 40), mat.frame); fr.position.set(x, 1.6, zi + side*.056); fr.rotation.y = side > 0 ? 0 : Math.PI; scene.add(fr);
-    const mr = new THREE.Mesh(new THREE.CircleGeometry(.57, 40), mat.mirror); mr.position.set(x, 1.6, zi + side*.062); mr.rotation.y = side > 0 ? 0 : Math.PI; mr.userData.mirror = true; scene.add(mr);
-    const bottle = cyl(.04, .04, .18, M({ color:[0xe9b8c9, 0xbfe0d6, 0xf3dfb3][(x + 9 + side) % 3], roughness:.3 }), 12); bottle.castShadow = false; scene.add(at(bottle, x + .45, .94, zi + side*.3));
+    addStatic(new THREE.CircleGeometry(.62, 40), mat.frame, x, 1.6, zi + side*.056, side > 0 ? 0 : Math.PI);
+    addStatic(new THREE.CircleGeometry(.57, 40), mat.mirror, x, 1.6, zi + side*.062, side > 0 ? 0 : Math.PI);
+    addStatic(new THREE.CylinderGeometry(.04, .04, .18, 12), BOTTLES[(x + 9 + side + 30) % 3], x + .45, .94, zi + side*.3);
   }));
 });
 const chairGeo = { base:new THREE.CylinderGeometry(.32, .36, .06, 28), pole:new THREE.CylinderGeometry(.06, .06, .36, 10), seat:new THREE.BoxGeometry(.66, .14, .6), towel:new THREE.BoxGeometry(.66, .08, .52), back:new THREE.BoxGeometry(.62, .36, .1), arm:new THREE.BoxGeometry(.08, .06, .5), post:new THREE.BoxGeometry(.05, .24, .05), foot:new THREE.BoxGeometry(.5, .04, .18) };
+// one chair, merged into three meshes (metal, leather, towel) and shared by all fifty
+const chairParts = new Map(); const cp = (geo, m, x, y, z, rx) => { const o = new THREE.Object3D(); o.position.set(x, y, z); o.rotation.x = rx || 0; o.updateMatrix(); if (!chairParts.has(m)) chairParts.set(m, []); chairParts.get(m).push({ g:geo, m:o.matrix.clone() }); };
+cp(chairGeo.base, mat.metal, 0, .03, 0); cp(chairGeo.pole, mat.metal, 0, .24, 0);
+cp(chairGeo.seat, mat.leather, 0, .5, 0); cp(chairGeo.towel, mat.towel, 0, .6, .02);
+cp(chairGeo.back, mat.leather, 0, .78, -.3, -.08);   // low back, so the dryer can reach the fur
+[-.38, .38].forEach(x => { cp(chairGeo.arm, mat.metal, x, .78, .02); cp(chairGeo.post, mat.metal, x, .66, .2); });
+cp(chairGeo.foot, mat.metal, 0, .14, .44);
+const chairMerged = [...chairParts].map(([m, parts]) => [m, mergeParts(parts)]);
 CHAIRS.forEach((c, i) => {
   const g = new THREE.Group(); g.position.set(c.x, 0, c.z); g.rotation.y = c.face;
-  const add = (geo, m, x, y, z) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.receiveShadow = true; g.add(o); return o; };
-  add(chairGeo.base, mat.metal, 0, .03, 0); add(chairGeo.pole, mat.metal, 0, .24, 0);
-  add(chairGeo.seat, mat.leather, 0, .5, 0); add(chairGeo.towel, mat.towel, 0, .6, .02);
-  add(chairGeo.back, mat.leather, 0, .78, -.3).rotation.x = -.08;   // low back, so the dryer can reach the fur
-  [-.38, .38].forEach(x => { add(chairGeo.arm, mat.metal, x, .78, .02); add(chairGeo.post, mat.metal, x, .66, .2); });
-  add(chairGeo.foot, mat.metal, 0, .14, .44);
+  chairMerged.forEach(([m, geo]) => { const o = new THREE.Mesh(geo, m); o.receiveShadow = true; g.add(o); });
   scene.add(g); chairGroups.push(g);
 });
+statics.forEach((parts, m) => { const o = new THREE.Mesh(mergeParts(parts), m); if (m === mat.mirror) o.userData.mirror = true; scene.add(o); });
 
 /* ---- lights ---- */
 scene.add(new THREE.HemisphereLight(0x9fb2d9, 0x3a2a20, .35));
 scene.add(new THREE.AmbientLight(0xffe2bf, .18));
 const key = new THREE.DirectionalLight(0xffd7a8, .32); key.position.set(2, 8, 5); key.castShadow = true;
-key.shadow.mapSize.set(2048, 2048); Object.assign(key.shadow.camera, { left:-13, right:13, top:12, bottom:-12, near:1, far:30 }); key.shadow.bias = -.0006; scene.add(key);
-[-5, 5].forEach(x => [-6.3, -2.1, 2.1, 6.3].forEach(z => { const p = new THREE.PointLight(0xffc98a, .7, 9, 2); p.position.set(x, RH - 1.1, z); scene.add(p); }));
+key.shadow.mapSize.set(1024, 1024); Object.assign(key.shadow.camera, { left:-13, right:13, top:12, bottom:-12, near:1, far:30 }); key.shadow.bias = -.0006; scene.add(key);
+[-5, 5].forEach(x => [-4.2, 4.2].forEach(z => { const p = new THREE.PointLight(0xffc98a, .95, 13, 2); p.position.set(x, RH - 1.1, z); scene.add(p); }));
 const windowLight = new THREE.PointLight(0x7fa6e0, .6, 14, 2); windowLight.position.set(0, 1.8, BZ + 1.2); scene.add(windowLight);
 let lightning = 0, nextLightning = 25 + Math.random()*30;
 
@@ -1092,10 +1111,10 @@ function onState(d){
 function renderPeople(){
   const list = [{ n:MEO.nick, c:MEO.top, me:true, b:blow.on }];
   others.forEach(o => { if (o.data && o.data.in) list.push({ n:cleanName(o.data.n) || "미용사", c:/^#[0-9a-f]{6}$/i.test(o.data.c || "") ? o.data.c : "#999", b:o.data.b >= 0 }); });
-  const staffN = battle.on ? (battle.mode === "survival" ? 0 : DIFF[battle.diff].n) : Math.max(0, STAFF.length - (list.length - 1));
+  const staffN = battle.on && battle.mode === "duel" ? DIFF[battle.diff].n : 0;
   npcs.slice(0, staffN).forEach(n => list.push({ n:n.n, c:n.top, b:n.seat >= 0 }));
   const realN = list.length - staffN;
-  $("cnt").textContent = battle.on && battle.mode === "survival" ? "혼자 버티는 중" : battle.on ? `개인전 · 나 + 직원 ${staffN}명 (${DIFF[battle.diff].label})` : realN > 1 ? `지금 ${realN}명 + 직원 ${staffN}명이 말리는 중` : `직원 ${staffN}명과 함께 말리는 중`;
+  $("cnt").textContent = !battle.on ? (realN > 1 ? `지금 ${realN}명 접속 중` : "모드를 골라 시작해요") : battle.mode === "survival" ? "혼자 버티는 중" : battle.on ? `개인전 · 나 + 직원 ${staffN}명 (${DIFF[battle.diff].label})` : realN > 1 ? `지금 ${realN}명 + 직원 ${staffN}명이 말리는 중` : `직원 ${staffN}명과 함께 말리는 중`;
   const ul = $("plist"); ul.textContent = "";
   if (battle.on && battle.mode === "duel"){
     standings().forEach((r, k) => { const li = document.createElement("li"); const i = document.createElement("i"); i.style.background = r.c; li.appendChild(i); li.appendChild(document.createTextNode(`${1 + standings().filter(x => x.score > r.score).length}. ${r.n} · ${r.dried}마리 · ${r.score}점`)); if (r.me){ const em = document.createElement("em"); em.textContent = "나"; li.appendChild(em); } ul.appendChild(li); });
@@ -1151,7 +1170,8 @@ const ITEM_KINDS = {
   cycle:{ name:"열풍·냉풍 자동순환", dur:20, color:0xff8a6a }
 };
 const battle = { on:false, diff:"normal", t:0, me:0, npc:0, ionT:0, cycleT:0, heat:"hot", stats:{}, items:[], spawnT:0, ending:false };
-let pickedMode = "heal";
+let pickedMode = "survival";
+$("enter").textContent = "버티기 시작";
 document.querySelectorAll(".modes button").forEach(b => b.addEventListener("click", () => {
   pickedMode = b.dataset.mode; document.querySelectorAll(".modes button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
   $("diffRow").hidden = pickedMode !== "battle"; $("enter").textContent = pickedMode === "battle" ? "대결 시작" : pickedMode === "survival" ? "버티기 시작" : "드라이샵 들어가기";
@@ -1170,7 +1190,7 @@ function itemMesh(kind){
     const cool = new THREE.Mesh(new THREE.TorusGeometry(.18, .055, 10, 30, Math.PI), M({ color:0x6fb8ff, emissive:0x3f9cff, emissiveIntensity:1.3 }));
     cool.rotation.z = Math.PI; g.add(hot, cool); g.userData.spin = g;
   }
-  const glow = new THREE.PointLight(ITEM_KINDS[kind].color, .8, 2.2, 2); glow.position.y = .1; g.add(glow);
+  const halo = new THREE.Mesh(new THREE.SphereGeometry(.34, 16, 10), new THREE.MeshBasicMaterial({ color:ITEM_KINDS[kind].color, transparent:true, opacity:.18, depthWrite:false })); g.add(halo);
   g.traverse(o => { if (o.isMesh) o.userData.itemRef = g; });
   return g;
 }
@@ -1196,7 +1216,9 @@ function startBattle(){
   battle.on = true; battle.ending = false; battle.t = 180; battle.me = 0; battle.npcScore = [0, 0, 0, 0]; battle.npcDried = [0, 0, 0, 0]; battle.ionT = 0; battle.cycleT = 0; battle.spawnT = 3; battle.stats = { meDone:0, npcDone:0, ionDone:0, full:0, fled:0 };
   setHeat("hot");
   // every chair gets a fresh, soaking-wet friend
-  seats.forEach(s => { if (s.state === "sit" || s.state === "enter") { seatFriend(s, s.seq + 1, false); dirtySeats.add(s.i); } });
+  leavers.forEach(L => dropAnimal(L.a)); leavers.length = 0;
+  const pickD = seats.map(s => [s, Math.hypot(P.pos.x - CHAIRS[s.i].x, P.pos.z - CHAIRS[s.i].z)]).sort((a, b) => a[1] - b[1]).slice(0, 18).map(x => x[0]);
+  seats.forEach(s => { if (pickD.includes(s)) seatFriend(s, s.seq + 1, false); else emptySeat(s); });
   npcs.forEach(n => { n.seat = -1; n.route = []; n.wait = 1 + Math.random()*2; });
   $("bhud").hidden = false; $("heatBtn").hidden = false; $("abarW").hidden = false; $("result").hidden = true; $("acts").hidden = true;
   toast(`드라이 대결 시작! 3분 · 난이도 ${DIFF[battle.diff].label}`);
@@ -1220,7 +1242,7 @@ function endBattle(){
   $("result").hidden = false; renderPeople();
 }
 $("again").addEventListener("click", () => { $("result").hidden = true; if (battle.mode === "survival") startSurvival(); else startBattle(); });
-$("toHeal").addEventListener("click", () => { $("result").hidden = true; $("acts").hidden = false; refillSeats(); renderPeople(); });
+$("toHeal").addEventListener("click", () => { $("result").hidden = true; $("intro").hidden = false; renderPeople(); });
 /* ---- 얼마나 버틸까: survive as long as you can ---- */
 const LB = { project:"hair-dry", key:"AIzaSyC6Om4e2dichdLTTyJ366nf-r6pozmIyno" };      // set on the public site: shared Firestore board; otherwise this device only
 const fmtTime = s => { s = Math.max(0, s); const m = Math.floor(s/60), r = Math.floor(s%60); return m ? `${m}분 ${r}초` : `${r}초`; };
@@ -1404,7 +1426,7 @@ function npcPick(n, active){
   n.seat = cand[0][0].i; n.work = 0; npcRoute(n, groomSpot(n.seat));
 }
 function updateNpcs(dt, T, blowers, people){
-  const want = battle.on ? (battle.mode === "survival" ? 0 : DIFF[battle.diff].n) : Math.max(0, STAFF.length - people);     // fewer staff when more real people are here
+  const want = battle.on && battle.mode === "duel" ? DIFF[battle.diff].n : 0;
   const active = npcs.slice(0, want);
   npcs.forEach((n, k) => {
     const on = k < want && entered;
@@ -1617,7 +1639,7 @@ function frame(){
     lodT = .25;
     const order = seats.filter(s => s.a).map(s => [s, s.a.root.position.distanceTo(camera.position)]).sort((x, y) => x[1] - y[1]);
     order.forEach(([s, d], rank) => {
-      const near = rank < 10 && d < 11;
+      const near = rank < 6 && d < 9;
       if (near !== s.a.near){ s.a.near = near; s.a.furParts.forEach(fp => fp.meshes.forEach((m, k) => { if (k > 0) m.visible = near; })); }
       s.showPin = rank < 8 && Math.hypot(P.pos.x - s.a.root.position.x, P.pos.z - s.a.root.position.z) < 6.5;
     });
@@ -1735,7 +1757,9 @@ function frame(){
 }
 
 // first friends: everyone starts from the same seats, then the network catches up
-seats.forEach(s => seatFriend(s, 0, false));
+// only the chairs near the door side are filled until a game starts (keeps phones smooth)
+{ const near = seats.map(s => [s, Math.hypot(P.pos.x - CHAIRS[s.i].x, P.pos.z - CHAIRS[s.i].z)]).sort((a, b) => a[1] - b[1]).slice(0, 12).map(x => x[0]);
+  seats.forEach(s => { if (near.includes(s)) seatFriend(s, 0, false); else { s.a = null; s.state = "empty"; s.label.style.opacity = 0; } }); }
 bakeEnv();
 startNet();
 frame();
