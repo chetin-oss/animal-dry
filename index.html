@@ -61,6 +61,41 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--amber);outline-
 .groom .gbar{height:10px;border-radius:9px;background:rgba(243,236,225,.14);overflow:hidden}
 .groom .gbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--rain),var(--amber));transition:width .2s}
 .groom .stop{border:0;background:var(--amber);color:var(--amber-ink);border-radius:12px;padding:10px 14px;font-family:var(--f-display);font-size:15px;white-space:nowrap}
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.modes button{border:1px solid var(--line);background:var(--solid);border-radius:14px;padding:11px 12px;text-align:left;display:flex;flex-direction:column;gap:2px}
+.modes button b{font-family:var(--f-display);font-weight:400;font-size:17px}
+.modes button small{font-size:12px;color:var(--muted)}
+.modes button[aria-pressed="true"]{border-color:var(--amber);background:var(--amber-soft,rgba(242,180,107,.14))}
+.diff{display:flex;gap:6px;align-items:center;font-size:12.5px;color:var(--muted)}
+.diff button{border:1px solid var(--line);background:var(--solid);border-radius:999px;padding:6px 12px;font-size:12.5px}
+.diff button[aria-pressed="true"]{border-color:var(--amber);color:var(--amber)}
+.bhud{position:fixed;left:50%;transform:translateX(-50%);top:calc(14px + env(safe-area-inset-top,0px));border-radius:18px;padding:8px 14px;display:flex;align-items:center;gap:14px;white-space:nowrap}
+.bhud .sc{display:flex;flex-direction:column;align-items:center;line-height:1.1}
+.bhud .sc small{font-size:11px;color:var(--muted)}
+.bhud .sc b{font-family:var(--f-display);font-weight:400;font-size:24px;font-variant-numeric:tabular-nums}
+.bhud .sc.me b{color:var(--amber)} .bhud .sc.npc b{color:var(--rain)}
+.bhud .clock{font-family:var(--f-display);font-size:22px;font-variant-numeric:tabular-nums;padding:2px 10px;border-radius:10px;background:var(--solid);border:1px solid var(--line)}
+.bhud .clock.hurry{color:#fff;background:#d9534f;border-color:#d9534f}
+.chips{position:fixed;left:50%;transform:translateX(-50%);top:calc(72px + env(safe-area-inset-top,0px));display:flex;gap:6px}
+.chip{border-radius:999px;padding:4px 11px;font-size:12.5px;white-space:nowrap}
+.chip.ion{background:rgba(111,184,255,.22);border:1px solid #6fb8ff;color:#cfe6ff}
+.chip.cyc{background:linear-gradient(90deg,rgba(255,110,90,.25),rgba(111,184,255,.25));border:1px solid #e9a0a0}
+.fullpower{position:fixed;inset:0;pointer-events:none;box-shadow:inset 0 0 0 4px #f2c14e,inset 0 0 60px rgba(242,193,78,.45);opacity:0;transition:opacity .3s}
+.groom .heat{border:1px solid var(--line);background:var(--solid);border-radius:12px;padding:9px 12px;font-size:13px;white-space:nowrap}
+.groom .heat.hot{border-color:#ff7a5c;color:#ffb3a3}
+.groom .heat.cool{border-color:#6fb8ff;color:#cfe6ff}
+.groom .heat.auto{border-color:#f2c14e;color:#f2c14e}
+.groom .abar{height:6px;border-radius:9px;background:rgba(243,236,225,.1);overflow:hidden}
+.groom .abar i{display:block;height:100%;width:0;background:#ff6b5a;transition:width .15s}
+.result{position:fixed;inset:0;display:grid;place-items:center;padding:24px 16px;background:rgba(10,9,14,.55)}
+.result .introcard{text-align:center}
+.result .big{font-family:var(--f-display);font-size:44px;line-height:1.1;color:var(--amber)}
+.result .vs{display:flex;justify-content:center;gap:28px;font-size:14px;color:var(--muted)}
+.result .vs b{display:block;font-family:var(--f-display);font-weight:400;font-size:34px;color:var(--ink)}
+.result .stats{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;font-size:13.5px;color:var(--muted)}
+.result .row2{display:flex;gap:8px}
+.result .row2 button{flex:1}
+.cta.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
 .emote{position:fixed;left:0;top:0;pointer-events:none;font-family:var(--f-display);font-size:16px;padding:4px 12px;border-radius:999px;background:var(--amber);color:var(--amber-ink);opacity:0;transition:opacity .25s;white-space:nowrap;will-change:transform}
 .hint{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(72px + env(safe-area-inset-bottom,0px));font-size:12.5px;color:var(--muted);border-radius:999px;padding:7px 14px;white-space:nowrap;transition:opacity .5s;max-width:calc(100vw - 32px);overflow:hidden;text-overflow:ellipsis}
 kbd{font-family:var(--f-body);font-size:11px;border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:0 5px;background:var(--solid);color:var(--ink)}
@@ -73,7 +108,7 @@ kbd{font-family:var(--f-body);font-size:11px;border:1px solid var(--line);border
 .tag{position:fixed;left:0;top:0;pointer-events:none;font-size:12px;padding:2px 9px;border-radius:999px;background:rgba(20,18,26,.72);border:1px solid var(--line);white-space:nowrap;will-change:transform}
 .say{position:fixed;left:0;top:0;pointer-events:none;max-width:220px;border-radius:14px;padding:7px 12px;font-size:13px;line-height:1.45;opacity:0;transition:opacity .3s;will-change:transform}
 .say b{display:block;font-size:11px;color:var(--amber)}
-.toast{position:fixed;left:50%;top:calc(84px + env(safe-area-inset-top,0px));transform:translate(-50%,-8px);opacity:0;padding:8px 16px;border-radius:999px;font-size:13.5px;transition:.35s;pointer-events:none;white-space:nowrap;max-width:calc(100vw - 32px);overflow:hidden;text-overflow:ellipsis}
+.toast{position:fixed;left:50%;top:calc(112px + env(safe-area-inset-top,0px));transform:translate(-50%,-8px);opacity:0;padding:8px 16px;border-radius:999px;font-size:13.5px;transition:.35s;pointer-events:none;white-space:nowrap;max-width:calc(100vw - 32px);overflow:hidden;text-overflow:ellipsis}
 .toast.on{opacity:1;transform:translate(-50%,0)}
 
 .intro{position:fixed;inset:0;display:grid;place-items:center;padding:24px max(16px,env(safe-area-inset-right,0px)) 24px max(16px,env(safe-area-inset-left,0px));background:rgba(10,9,14,.45)}
@@ -112,6 +147,12 @@ kbd{font-family:var(--f-body);font-size:11px;border:1px solid var(--line);border
   .groom .mid{order:-1;flex-basis:100%}
   .groom .mid b{font-size:15px}
   .groom .stop{padding:9px 10px;font-size:14px}
+  .groom .heat{padding:8px 9px}
+  .bhud{gap:8px;padding:6px 10px;top:calc(104px + env(safe-area-inset-top,0px))}
+  .bhud .sc b{font-size:20px}
+  .chips{top:calc(160px + env(safe-area-inset-top,0px))}
+  .toast{top:calc(196px + env(safe-area-inset-top,0px))}
+  .modes{grid-template-columns:1fr}
   .pin{min-width:96px;padding:4px 8px 6px}
   .pin b{font-size:12.5px}
 }
@@ -140,18 +181,41 @@ kbd{font-family:var(--f-body);font-size:11px;border:1px solid var(--line);border
 </nav>
 <div class="groom glass" id="groom" hidden>
   <button type="button" class="spin" id="spinL" aria-label="의자를 왼쪽으로 돌리기">◀ 돌리기</button>
-  <div class="mid"><b id="gName"></b><div class="gbar"><i id="gBar"></i></div><small>동물 위를 누르고 문지르면 바람 · 빈 곳을 끌면 둘러보기 · 파란 점은 아직 젖은 곳</small></div>
+  <button type="button" class="heat hot" id="heatBtn" hidden>열풍</button>
+  <div class="mid"><b id="gName"></b><div class="gbar"><i id="gBar"></i></div><div class="abar" id="abarW" hidden><i id="abar"></i></div><small>동물 위를 누르고 문지르면 바람 · 빈 곳을 끌면 둘러보기 · 파란 점은 아직 젖은 곳</small></div>
   <button type="button" class="spin" id="spinR" aria-label="의자를 오른쪽으로 돌리기">돌리기 ▶</button>
   <div class="zoom"><button type="button" id="zIn" aria-label="가까이 보기">＋</button><button type="button" id="zOut" aria-label="멀리 보기">－</button></div>
   <button type="button" class="stop" id="gStop">그만 말리기</button>
 </div>
 <div class="toast glass" id="toast"></div>
+<div class="bhud glass" id="bhud" hidden>
+  <div class="sc me"><small>나</small><b id="scMe">0</b></div>
+  <span class="clock" id="clock">3:00</span>
+  <div class="sc npc"><small>직원 팀</small><b id="scNpc">0</b></div>
+</div>
+<div class="chips" id="chips"></div>
+<div class="fullpower" id="fullpower"></div>
+<div class="result" id="result" hidden>
+  <div class="introcard glass">
+    <div class="eyebrow">DRY BATTLE · 결과</div>
+    <div class="big" id="rTitle"></div>
+    <div class="vs"><div>나<b id="rMe">0</b></div><div>직원 팀<b id="rNpc">0</b></div></div>
+    <ul class="stats" id="rStats"></ul>
+    <div class="row2"><button class="cta" id="again" type="button">한 판 더</button><button class="cta ghost" id="toHeal" type="button">힐링 모드로</button></div>
+    <a class="buy" href="https://smartstore.naver.com/thirdline/products/12945665241" target="_blank" rel="noopener">빠르게 마르는 드라이기 보기</a>
+  </div>
+</div>
 
 <div class="intro" id="intro">
   <div class="introcard glass">
     <div class="eyebrow">RAINY NIGHT · DRY SHOP</div>
     <h2>비에 젖은 야생동물들을<br>다 같이 말려 주세요</h2>
     <p>소나기를 피해 숲에서 너구리, 여우, 아기 곰 같은 친구들이 찾아와 쉰 개의 의자에 앉아 거울을 보고 있어요. 드라이어를 대야만 털이 마르고, 댄 자리부터 보들보들하게 일어나요. 다 마른 친구는 기분 좋게 숲으로 돌아가고, 문으로 새 친구가 들어와요.</p>
+    <div class="modes" role="group" aria-label="모드">
+      <button type="button" data-mode="heal" aria-pressed="true"><b>힐링 모드</b><small>천천히, 다 같이 말려요</small></button>
+      <button type="button" data-mode="battle" aria-pressed="false"><b>드라이 대결 · vs 직원</b><small>3분 동안 직원 팀보다 많이 말리기</small></button>
+    </div>
+    <div class="diff" id="diffRow" hidden><span>난이도</span><button type="button" data-d="easy" aria-pressed="false">쉬움</button><button type="button" data-d="normal" aria-pressed="true">보통</button><button type="button" data-d="hard" aria-pressed="false">어려움</button></div>
     <ul class="how">
       <li><b>걷기</b>WASD·방향키, 또는 바닥을 클릭</li>
       <li><b>드라이 모드</b>동물을 클릭하면 옆에 서서 고정돼요. 동물 위를 문지르면 바람, 의자를 돌려 앞쪽도</li>
@@ -159,6 +223,8 @@ kbd{font-family:var(--f-body);font-size:11px;border:1px solid var(--line);border
       <li><b>같이 말리기</b>함께 들어온 사람들의 드라이어 바람도 털을 말려요</li>
       <li><b>행동</b>1 인사하기 · 2 박수치기 · 3 가까운 동물 껴안기</li>
       <li><b>둘러보기</b>거울 섬 다섯 줄, 의자 50개. 뒤쪽 통로로 다녀요</li>
+      <li><b>드라이 대결</b>마지막 바람을 준 쪽이 점수. 열풍만 쓰면 뜨거워해요(F로 냉풍)</li>
+      <li><b>아이템</b>통로에 떨어진 음이온 케어(점수 1.5배)·자동순환(뜨거움 걱정 없음)을 주워요</li>
     </ul>
     <div class="namerow"><label for="nick">내 이름</label><input id="nick" maxlength="10" autocomplete="off"><div class="swatches" id="sw" role="group" aria-label="옷 색"></div></div>
     <button class="cta" id="enter">드라이샵 들어가기</button>
@@ -647,7 +713,7 @@ function seatFriend(seat, seq, enter, keepOld){
   const sp = speciesFor(seat.i, seq);
   seat.a = buildAnimal(sp, hash(seat.i*1000 + seq));
   scene.add(seat.a.root);
-  seat.spin = seat.spinGoal = 0; seat.midSaid = false; if (chairGroups[seat.i]) chairGroups[seat.i].rotation.y = CHAIRS[seat.i].face;
+  seat.spin = seat.spinGoal = 0; seat.midSaid = false; seat.owner = null; seat.ionHit = false; seat.annoy = 0; seat.hotSaid = false; seat.fled = false; if (chairGroups[seat.i]) chairGroups[seat.i].rotation.y = CHAIRS[seat.i].face;
   seat.state = enter ? "enter" : "sit"; seat.t = 0; seat.sat = 0; seat.lineShown = false; seat.nextShake = 10 + Math.random()*12;
   placeSeated(seat);
   seat.path = seat.path || pathFor(CHAIRS[seat.i]);
@@ -782,6 +848,7 @@ function pointsLayer(n, color, size, opacity){
 }
 const MARK = pointsLayer(14, 0x6fb8ff, .05, .95); MARK.p.renderOrder = 5; MARK.p.material.depthTest = false;
 let markT = 0;
+const ION = pointsLayer(200, 0x9fd4ff, .05, .95);
 const AIR = pointsLayer(500, 0xfff3e2, .025, .5), DROP = pointsLayer(500, 0x9cc8f0, .03, .85), HEART = pointsLayer(160, 0xff8fb1, .07, .9);
 function emit(L, x, y, z, vx, vy, vz, life){ const i = L.next; L.next = (L.next + 1) % L.n; L.pos[i*3] = x; L.pos[i*3+1] = y; L.pos[i*3+2] = z; L.vel[i*3] = vx; L.vel[i*3+1] = vy; L.vel[i*3+2] = vz; L.life[i] = life; }
 function stepLayer(L, dt, grav){
@@ -831,7 +898,7 @@ function enterGroom(i){
   const c = CHAIRS[i]; groom.yaw = c.face + Math.PI + (c.x >= 0 ? .6 : -.6);   // look from the side opposite the avatar groom.pitch = .6; groom.dist = 3.1;
   $("groom").hidden = false; $("acts").hidden = true; $("hint").style.opacity = "0";
 }
-function exitGroom(){ groom.seat = -1; groom.pending = -1; blow.holding = false; $("groom").hidden = true; $("acts").hidden = false; }
+function exitGroom(){ groom.seat = -1; groom.pending = -1; blow.holding = false; $("groom").hidden = true; $("acts").hidden = battle.on; }
 function spinChair(dir, step){ if (groom.seat < 0) return; const s = seats[groom.seat]; s.spinGoal = (s.spinGoal || 0) + dir*(step || Math.PI/4); groom.dist = Math.max(groom.dist, 3.1); }
 let spinHold = null;
 function holdSpin(btn, dir){
@@ -890,6 +957,7 @@ canvas.addEventListener("pointerup", e => {
   canvas.classList.remove("dragging");
   if (down && !down.blow && !down.moved){
     if (down.seat !== undefined){ enterGroom(down.seat); fadeHint(); }
+    else if (battle.on && battle.items.length && (() => { const r = canvas.getBoundingClientRect(); ndc.set((e.clientX - r.left)/r.width*2 - 1, -(e.clientY - r.top)/r.height*2 + 1); ray.setFromCamera(ndc, camera); const hi = ray.intersectObjects(battle.items.map(i => i.g), true)[0]; if (!hi) return false; exitGroom(); const ip = hi.object.userData.itemRef.position; const g = new THREE.Vector3(ip.x, 0, ip.z); clampRoom(g); routeTo(g); return true; })()){ }
     else if (groom.seat < 0){ const h = pickAt(e, true); if (h && h.object === floor){ const g = new THREE.Vector3(h.point.x, 0, h.point.z); clampRoom(g); routeTo(g); groom.pending = -1; fadeHint(); } }
   }
   down = null; blow.holding = false;
@@ -970,6 +1038,7 @@ $("sw").addEventListener("click", e => { const b = e.target.closest("button"); i
 $("enter").addEventListener("click", () => {
   MEO.nick = cleanName($("nick").value) || MEO.nick; store.set("ds.nick", MEO.nick);
   $("intro").hidden = true; entered = true; unlockAudio(); pushPresence(true); renderPeople(); fadeHint();
+  if (pickedMode === "battle") startBattle();
 });
 
 /* ================= network ================= */
@@ -1004,10 +1073,10 @@ function onState(d){
 function renderPeople(){
   const list = [{ n:MEO.nick, c:MEO.top, me:true, b:blow.on }];
   others.forEach(o => { if (o.data && o.data.in) list.push({ n:cleanName(o.data.n) || "미용사", c:/^#[0-9a-f]{6}$/i.test(o.data.c || "") ? o.data.c : "#999", b:o.data.b >= 0 }); });
-  const staffN = Math.max(0, STAFF.length - (list.length - 1));
+  const staffN = battle.on ? DIFF[battle.diff].n : Math.max(0, STAFF.length - (list.length - 1));
   npcs.slice(0, staffN).forEach(n => list.push({ n:n.n, c:n.top, b:n.seat >= 0 }));
   const realN = list.length - staffN;
-  $("cnt").textContent = realN > 1 ? `지금 ${realN}명 + 직원 ${staffN}명이 말리는 중` : `직원 ${staffN}명과 함께 말리는 중`;
+  $("cnt").textContent = battle.on ? `대결 중 · 직원 팀 ${staffN}명 (${DIFF[battle.diff].label})` : realN > 1 ? `지금 ${realN}명 + 직원 ${staffN}명이 말리는 중` : `직원 ${staffN}명과 함께 말리는 중`;
   const ul = $("plist"); ul.textContent = "";
   list.slice(0, 7).forEach(p => { const li = document.createElement("li"); const i = document.createElement("i"); i.style.background = p.c; li.appendChild(i); li.appendChild(document.createTextNode(p.n)); if (p.me){ const em = document.createElement("em"); em.textContent = "나"; li.appendChild(em); } else if (p.b){ const em = document.createElement("em"); em.textContent = "말리는 중"; li.appendChild(em); } ul.appendChild(li); });
 }
@@ -1050,6 +1119,123 @@ let lodT = 0;
 const c0 = s => CHAIRS[s.i];
 
 
+/* ================= dry battle: you vs the staff ================= */
+const DIFF = { easy:{ n:2, power:.32, label:"쉬움" }, normal:{ n:3, power:.45, label:"보통" }, hard:{ n:4, power:.6, label:"어려움", steal:true } };
+const POINTS = { bear:3, boar:3, badger:3, raccoon:2, fox:2, otter:2, waterdeer:2, leopardcat:2, chipmunk:1, hare:1 };
+const ITEM_KINDS = {
+  ion:{ name:"플라스마 음이온 케어", dur:10, color:0x6fb8ff },
+  cycle:{ name:"열풍·냉풍 자동순환", dur:20, color:0xff8a6a }
+};
+const battle = { on:false, diff:"normal", t:0, me:0, npc:0, ionT:0, cycleT:0, heat:"hot", stats:{}, items:[], spawnT:0, ending:false };
+let pickedMode = "heal";
+document.querySelectorAll(".modes button").forEach(b => b.addEventListener("click", () => {
+  pickedMode = b.dataset.mode; document.querySelectorAll(".modes button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+  $("diffRow").hidden = pickedMode !== "battle"; $("enter").textContent = pickedMode === "battle" ? "대결 시작" : "드라이샵 들어가기";
+}));
+document.querySelectorAll("#diffRow button").forEach(b => b.addEventListener("click", () => {
+  battle.diff = b.dataset.d; document.querySelectorAll("#diffRow button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+}));
+function itemMesh(kind){
+  const g = new THREE.Group(); g.userData.item = kind;
+  if (kind === "ion"){
+    const core = new THREE.Mesh(new THREE.SphereGeometry(.14, 20, 14), M({ color:0x9fd4ff, emissive:0x3f9cff, emissiveIntensity:1.6, roughness:.2 }));
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(.24, .02, 8, 40), M({ color:0xcfe6ff, emissive:0x6fb8ff, emissiveIntensity:1.2 }));
+    ring.rotation.x = Math.PI/2.4; g.add(core, ring); g.userData.spin = ring;
+  } else {
+    const hot = new THREE.Mesh(new THREE.TorusGeometry(.18, .055, 10, 30, Math.PI), M({ color:0xff7a5c, emissive:0xff5a3a, emissiveIntensity:1.3 }));
+    const cool = new THREE.Mesh(new THREE.TorusGeometry(.18, .055, 10, 30, Math.PI), M({ color:0x6fb8ff, emissive:0x3f9cff, emissiveIntensity:1.3 }));
+    cool.rotation.z = Math.PI; g.add(hot, cool); g.userData.spin = g;
+  }
+  const glow = new THREE.PointLight(ITEM_KINDS[kind].color, .8, 2.2, 2); glow.position.y = .1; g.add(glow);
+  g.traverse(o => { if (o.isMesh) o.userData.itemRef = g; });
+  return g;
+}
+const WALK_Z = [-6.3, -2.1, 2.1, 6.3];
+function spawnItem(){
+  const kind = Math.random() < .5 ? "ion" : "cycle";
+  const side = Math.random() < .3, pos = side ? new THREE.Vector3((Math.random() < .5 ? -1 : 1)*9.4, .55, -8 + Math.random()*16) : new THREE.Vector3(-7 + Math.random()*14, .55, WALK_Z[(Math.random()*4)|0]);
+  const g = itemMesh(kind); g.position.copy(pos); scene.add(g);
+  battle.items.push({ kind, g, t:0 });
+}
+function clearItems(){ battle.items.forEach(it => scene.remove(it.g)); battle.items = []; }
+function takeItem(it){
+  scene.remove(it.g); battle.items.splice(battle.items.indexOf(it), 1);
+  if (it.kind === "ion"){ battle.ionT = ITEM_KINDS.ion.dur; battle.stats.ionItems = (battle.stats.ionItems || 0) + 1; toast("플라스마 음이온 케어 · 10초 동안 말린 친구는 점수 1.5배"); }
+  else { battle.cycleT = ITEM_KINDS.cycle.dur; battle.stats.cycleItems = (battle.stats.cycleItems || 0) + 1; toast("열풍·냉풍 자동순환 · 20초 동안 뜨거워하지 않아요"); }
+}
+function setHeat(h){ battle.heat = h; const b = $("heatBtn"); b.className = "heat " + (battle.cycleT > 0 ? "auto" : h); b.textContent = battle.cycleT > 0 ? "자동순환" : h === "hot" ? "열풍" : "냉풍"; }
+$("heatBtn").addEventListener("click", () => { if (battle.cycleT <= 0) setHeat(battle.heat === "hot" ? "cool" : "hot"); });
+addEventListener("keydown", e => { if (e.target.tagName === "INPUT") return; if ((e.key === "f" || e.key === "F") && battle.on && battle.cycleT <= 0) setHeat(battle.heat === "hot" ? "cool" : "hot"); });
+function startBattle(){
+  clearItems(); exitGroom();
+  battle.on = true; battle.ending = false; battle.t = 180; battle.me = 0; battle.npc = 0; battle.ionT = 0; battle.cycleT = 0; battle.spawnT = 3; battle.stats = { meDone:0, npcDone:0, ionDone:0, full:0, fled:0 };
+  setHeat("hot");
+  // every chair gets a fresh, soaking-wet friend
+  seats.forEach(s => { if (s.state === "sit" || s.state === "enter") { seatFriend(s, s.seq + 1, false); dirtySeats.add(s.i); } });
+  npcs.forEach(n => { n.seat = -1; n.route = []; n.wait = 1 + Math.random()*2; });
+  $("bhud").hidden = false; $("heatBtn").hidden = false; $("abarW").hidden = false; $("result").hidden = true; $("acts").hidden = true;
+  toast(`드라이 대결 시작! 3분 · 난이도 ${DIFF[battle.diff].label}`);
+  renderPeople();
+}
+function endBattle(){
+  battle.on = false; clearItems(); exitGroom();
+  $("bhud").hidden = true; $("heatBtn").hidden = true; $("abarW").hidden = true; $("chips").textContent = ""; $("fullpower").style.opacity = 0;
+  $("rMe").textContent = battle.me; $("rNpc").textContent = battle.npc;
+  $("rTitle").textContent = battle.me > battle.npc ? "승리!" : battle.me < battle.npc ? "아쉬운 패배" : "무승부";
+  const st = battle.stats, ul = $("rStats"); ul.textContent = "";
+  [`내가 말린 친구 ${st.meDone}마리 · 직원 팀 ${st.npcDone}마리`,
+   `플라스마 음이온 케어로 마무리한 친구 ${st.ionDone}마리`,
+   `음이온 케어 + 자동순환을 함께 켜고 말린 친구 ${st.full}마리`,
+   st.fled ? `뜨거워서 도망간 친구 ${st.fled}마리` : "뜨거워서 도망간 친구 없음"].forEach(x => { const li = document.createElement("li"); li.textContent = x; ul.appendChild(li); });
+  $("result").hidden = false; renderPeople();
+}
+$("again").addEventListener("click", () => { $("result").hidden = true; startBattle(); });
+$("toHeal").addEventListener("click", () => { $("result").hidden = true; $("acts").hidden = false; renderPeople(); });
+function scoreFor(s, who){
+  const base = POINTS[s.a.sp.id] || 2;
+  return who === "me" && s.ionHit ? Math.round(base*1.5*10)/10 : base;
+}
+function updateBattle(dt, T){
+  if (!battle.on) return;
+  battle.t -= dt; battle.ionT = Math.max(0, battle.ionT - dt);
+  const hadCycle = battle.cycleT > 0; battle.cycleT = Math.max(0, battle.cycleT - dt);
+  if (hadCycle && battle.cycleT <= 0) setHeat(battle.heat);
+  if (battle.cycleT > 0 && $("heatBtn").className !== "heat auto") setHeat(battle.heat);
+  const sec = Math.max(0, Math.ceil(battle.t));
+  $("clock").textContent = `${Math.floor(sec/60)}:${String(sec%60).padStart(2, "0")}`; $("clock").classList.toggle("hurry", sec <= 20);
+  $("scMe").textContent = battle.me; $("scNpc").textContent = battle.npc;
+  const chips = [];
+  if (battle.ionT > 0) chips.push(`<span class="chip glass ion">음이온 케어 ${Math.ceil(battle.ionT)}초</span>`);
+  if (battle.cycleT > 0) chips.push(`<span class="chip glass cyc">자동순환 ${Math.ceil(battle.cycleT)}초</span>`);
+  const html = chips.join(""); if ($("chips").innerHTML !== html) $("chips").innerHTML = html;
+  $("fullpower").style.opacity = battle.ionT > 0 && battle.cycleT > 0 ? 1 : 0;
+  // items on the floor
+  battle.spawnT -= dt;
+  if (battle.spawnT <= 0 && battle.items.length < 3){ spawnItem(); battle.spawnT = 8 + Math.random()*6; }
+  for (const it of [...battle.items]){
+    it.t += dt; it.g.position.y = .55 + Math.sin(it.t*2.5)*.08; it.g.userData.spin.rotation.y += dt*2;
+    if (Math.hypot(P.pos.x - it.g.position.x, P.pos.z - it.g.position.z) < .9) takeItem(it);
+    else if (it.t > 30){ scene.remove(it.g); battle.items.splice(battle.items.indexOf(it), 1); }
+  }
+  // hot air makes the friend you are drying grumpy; cool air or auto-cycle calms it down
+  seats.forEach(s => { if (s.a && s.state === "sit" && !(blow.on && blow.seat === s.i)) s.annoy = Math.max(0, (s.annoy || 0) - dt*.12); });
+  if (blow.on){
+    const s = seats[blow.seat];
+    if (s && s.a && s.state === "sit"){
+      if (battle.cycleT > 0) s.annoy = Math.max(0, (s.annoy || 0) - dt*.2);
+      else if (battle.heat === "hot") s.annoy = (s.annoy || 0) + dt*.16;
+      else s.annoy = Math.max(0, (s.annoy || 0) - dt*.35);
+      if (s.annoy > .6 && !s.hotSaid){ s.hotSaid = true; say(s, "앗, 조금 뜨거워요… 냉풍으로 바꿔 주세요!"); }
+      if (s.annoy >= 1){
+        s.state = "happy"; s.t = 0; s.fled = true; battle.me = Math.max(0, battle.me - 1); battle.stats.fled++;
+        say(s, "너무 뜨거워요! 집에 갈래요!"); toast("뜨거워서 친구가 도망갔어요 · -1점"); dirtySeats.add(s.i);
+      }
+    }
+  }
+  if (groom.seat >= 0){ const s = seats[groom.seat]; $("abar").style.width = Math.min(100, (s.annoy || 0)*100) + "%"; }
+  if (battle.t <= 0 && !battle.ending){ battle.ending = true; endBattle(); }
+}
+
 /* ================= staff: a few groomers so nobody dries alone ================= */
 const STAFF = [
   { n:"직원 해나", top:"#9fd0a6", hair:"#2b1d17", lines:["오늘 비가 정말 많이 오네요.","같이 말리니까 금방 끝나요!"] },
@@ -1070,12 +1256,12 @@ function npcRoute(n, target){
 }
 function npcPick(n, active){
   const taken = new Set(active.filter(m => m !== n && m.seat >= 0).map(m => m.seat)); if (groom.seat >= 0) taken.add(groom.seat);
-  const cand = seats.filter(s => s.a && s.state === "sit" && !taken.has(s.i)).map(s => [s, s.a.root.position.distanceTo(n.pos) + Math.random()*6]).sort((a, b) => a[1] - b[1]);
+  const cand = seats.filter(s => s.a && s.state === "sit" && !taken.has(s.i)).map(s => [s, s.a.root.position.distanceTo(n.pos) + Math.random()*6 + (battle.on && DIFF[battle.diff].steal ? s.a.avg*10 : 0)]).sort((a, b) => a[1] - b[1]);
   if (!cand.length) return;
   n.seat = cand[0][0].i; n.work = 0; npcRoute(n, groomSpot(n.seat));
 }
 function updateNpcs(dt, T, blowers, people){
-  const want = Math.max(0, STAFF.length - people);     // fewer staff when more real people are here
+  const want = battle.on ? DIFF[battle.diff].n : Math.max(0, STAFF.length - people);     // fewer staff when more real people are here
   const active = npcs.slice(0, want);
   npcs.forEach((n, k) => {
     const on = k < want && entered;
@@ -1085,7 +1271,7 @@ function updateNpcs(dt, T, blowers, people){
     if (n.seat >= 0 && (!seats[n.seat].a || seats[n.seat].state !== "sit" || groom.seat === n.seat)){ n.seat = -1; n.route = []; n.act = { k:"clap", t:0 }; n.wait = 2; }
     if (n.route.length){
       const g = n.route[0], dx = g.x - n.pos.x, dz = g.z - n.pos.z, d = Math.hypot(dx, dz);
-      if (d < .06) n.route.shift(); else { spd = Math.min(1.9, d*3 + .4); n.pos.x += dx/d*spd*dt; n.pos.z += dz/d*spd*dt; n.head = turn(n.head, Math.atan2(dx, dz), Math.min(1, dt*8)); }
+      if (d < .06) n.route.shift(); else { spd = Math.min(battle.on && battle.diff === "hard" ? 2.4 : 1.9, d*3 + .4); n.pos.x += dx/d*spd*dt; n.pos.z += dz/d*spd*dt; n.head = turn(n.head, Math.atan2(dx, dz), Math.min(1, dt*8)); }
     } else if (n.seat >= 0){
       const s = seats[n.seat], a = s.a;
       n.work += dt; n.lpT -= dt;
@@ -1099,7 +1285,7 @@ function updateNpcs(dt, T, blowers, people){
       }
       a.pivot.updateMatrixWorld(); tgt = a.pivot.localToWorld(n.lp.clone());
       const wob = n.lp.clone().add(new THREE.Vector3(Math.sin(T*3 + k)*.06, Math.cos(T*2.3 + k)*.05, 0));
-      blowers.push({ seat:n.seat, lp:wob, from:n.g.userData.rig.dryer.position, power:.55, mine:true });
+      blowers.push({ seat:n.seat, lp:wob, from:n.g.userData.rig.dryer.position, power:battle.on ? DIFF[battle.diff].power : .55, mine:true, owner:"npc" });
       n.head = turn(n.head, Math.atan2(tgt.x - n.pos.x, tgt.z - n.pos.z), Math.min(1, dt*6));
     } else {
       n.wait -= dt; if (n.wait <= 0) npcPick(n, active);
@@ -1185,11 +1371,12 @@ function frame(){
   me.userData.rig.dryer.visible = !(myAct && myAct.k !== "wave");
   placeEmote(myEmote, P.pos, myAct);
   dryerPose(me, P.pos, P.head, target, blow.on, T);
+  if (battle.on && blow.on){ const led = me.userData.rig.dryer.userData.led.material; const c = battle.cycleT > 0 ? (Math.floor(T*1.5) % 2 ? 0xff3b4a : 0x3fb6ff) : battle.heat === "hot" ? 0xff3b4a : 0x3fb6ff; led.color.set(c); led.emissive.set(c); }
   if (net && (presDirty || spd || blow.on || T - lastPres/1000 > 3)) pushPresence(false);
 
   // ---- others ----
   const now = performance.now(), blowers = [];
-  if (blow.on) blowers.push({ seat:blow.seat, lp:blow.lp, from:me.userData.rig.dryer.position, power:1, mine:true });
+  if (blow.on) blowers.push({ seat:blow.seat, lp:blow.lp, from:me.userData.rig.dryer.position, power:battle.on && battle.cycleT <= 0 && battle.heat === "cool" ? .5 : 1, mine:true, owner:"me", ion:battle.on && battle.ionT > 0 });
   if (net){
     const live = new Set();
     for (const p of net.others()){
@@ -1226,6 +1413,7 @@ function frame(){
   }
   let people = 0; others.forEach(o => { if (o.data && o.data.in) people++; });
   const staffOn = updateNpcs(dt, T, blowers, people);
+  updateBattle(dt, T);
 
   // ---- friends ----
   doorOpen = Math.max(0, doorOpen - dt*.6);
@@ -1272,6 +1460,8 @@ function frame(){
     if (d <= 0){ dropAnimal(L.a); leavers.splice(k, 1); }
   }
   blowers.forEach(b => { const s = seats[b.seat]; if (s.a && s.state === "sit"){ applyBlow(s, b.lp, b.from, dt, b.power); if (b.mine) dirtySeats.add(s.i);
+      if (b.owner) s.owner = b.owner; if (b.ion) s.ionHit = true; else if (b.owner === "me") s.ionHit = false;
+      if (b.ion){ const tg = s.a.pivot.localToWorld(b.lp.clone()); for (let k=0;k<2;k++) emit(ION, tg.x + (Math.random()-.5)*.3, tg.y + (Math.random()-.5)*.3, tg.z + (Math.random()-.5)*.3, (Math.random()-.5)*.3, .4 + Math.random()*.3, (Math.random()-.5)*.3, .9); }
       // a stream of warm air
       for (let k=0;k<2;k++){ const f = b.from, tg = s.a.pivot.localToWorld(b.lp.clone()); tmp.copy(tg).sub(f); const L = tmp.length(); tmp.normalize();
         emit(AIR, f.x, f.y, f.z, tmp.x*L*2.6 + (Math.random()-.5)*.4, tmp.y*L*2.6 + (Math.random()-.5)*.4, tmp.z*L*2.6 + (Math.random()-.5)*.4, .38); }
@@ -1313,7 +1503,16 @@ function frame(){
       if (avg < .06){
         s.state = "happy"; s.t = 0; for (let k=0;k<TUFTS;k++) a.wet[k] = 0; a.dirty = true;
         doneCount++; $("doneN").textContent = doneCount; dirtySeats.add(s.i);
-        if (Math.hypot(P.pos.x - c0(s).x, P.pos.z - c0(s).z) < 8){ toast("보송해진 친구가 숲으로 돌아가요"); say(s, Math.random() < .45 ? THIRDLINE : "고마워요! 이제 하나도 안 추워요."); }
+        if (battle.on && (s.owner === "me" || s.owner === "npc")){
+          const pts = scoreFor(s, s.owner);
+          if (s.owner === "me"){
+            battle.me = Math.round((battle.me + pts)*10)/10; battle.stats.meDone++;
+            if (s.ionHit) battle.stats.ionDone++;
+            const full = battle.ionT > 0 && battle.cycleT > 0; if (full) battle.stats.full++;
+            toast(`+${pts}점${s.ionHit ? " · 음이온 케어 1.5배" : ""}`);
+            say(s, full || Math.random() < .3 ? THIRDLINE : "보송해졌다! 고마워요.");
+          } else { battle.npc = Math.round((battle.npc + pts)*10)/10; battle.stats.npcDone++; if (Math.hypot(P.pos.x - c0(s).x, P.pos.z - c0(s).z) < 8) toast(`직원 팀 +${pts}점`); }
+        } else if (Math.hypot(P.pos.x - c0(s).x, P.pos.z - c0(s).z) < 8){ toast("보송해진 친구가 숲으로 돌아가요"); say(s, Math.random() < .45 ? THIRDLINE : "고마워요! 이제 하나도 안 추워요."); }
       }
     }
     // label over the nearest chairs only
@@ -1330,7 +1529,7 @@ function frame(){
   // door swings open while a friend passes
   doorPivot.rotation.y = lerp(doorPivot.rotation.y, doorOpen > 0 ? -1.4 : 0, .08);
 
-  stepLayer(AIR, dt, -.2); stepLayer(DROP, dt, 9.8); stepLayer(HEART, dt, -.3);
+  stepLayer(AIR, dt, -.2); stepLayer(ION, dt, -.4); stepLayer(DROP, dt, 9.8); stepLayer(HEART, dt, -.3);
   // rain
   for (let i=0;i<RAIN_N;i++){ const o = i*6, sp = rainSpd[i]*dt; rainPos[o+1] -= sp; rainPos[o+4] -= sp; if (rainPos[o+4] < 0) rainSpot(i, false); }
   rainGeo.attributes.position.needsUpdate = true;
