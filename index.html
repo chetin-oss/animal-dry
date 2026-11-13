@@ -61,7 +61,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--amber);outline-
 .groom .gbar{height:10px;border-radius:9px;background:rgba(243,236,225,.14);overflow:hidden}
 .groom .gbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--rain),var(--amber));transition:width .2s}
 .groom .stop{border:0;background:var(--amber);color:var(--amber-ink);border-radius:12px;padding:10px 14px;font-family:var(--f-display);font-size:15px;white-space:nowrap}
-.modes{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.modes{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
 .modes button{border:1px solid var(--line);background:var(--solid);border-radius:14px;padding:11px 12px;text-align:left;display:flex;flex-direction:column;gap:2px}
 .modes button b{font-family:var(--f-display);font-weight:400;font-size:17px}
 .modes button small{font-size:12px;color:var(--muted)}
@@ -89,7 +89,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--amber);outline-
 .groom .abar i{display:block;height:100%;width:0;background:#ff6b5a;transition:width .15s}
 .result{position:fixed;inset:0;display:grid;place-items:center;padding:24px 16px;background:rgba(10,9,14,.55)}
 .result .introcard{text-align:center}
-.result .big{font-family:var(--f-display);font-size:44px;line-height:1.1;color:var(--amber)}
+.result .big{text-wrap:balance;font-family:var(--f-display);font-size:clamp(30px,8vw,44px);line-height:1.1;color:var(--amber)}
 .result .rank{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;text-align:left}
 .result .rank li{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-size:14px}
 .result .rank li.me{border-color:var(--amber);background:rgba(242,180,107,.12)}
@@ -97,6 +97,13 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--amber);outline-
 .result .rank li span{flex:1}
 .result .rank li b{font-family:var(--f-display);font-weight:400;font-size:18px;font-variant-numeric:tabular-nums}
 .result .rank li em{font-style:normal;font-family:var(--f-display);color:var(--muted);width:2.2em}
+.lbsend{display:flex;gap:8px}
+.lbsend input{flex:1;min-width:0;border:1px solid var(--line);background:var(--solid);border-radius:12px;padding:10px 12px}
+.lbsend .cta{padding:10px 14px;font-size:15px}
+.lbnote{margin:0;font-size:12px;color:var(--muted)}
+.result .rank li.new{border-color:#9fd4ff;background:rgba(111,184,255,.14)}
+.bhud .sc.npc.cold b{color:#9fd4ff}
+.bhud .sc.npc.freeze b{color:#ff8f8f}
 .result .vs{display:flex;justify-content:center;gap:28px;font-size:14px;color:var(--muted)}
 .result .vs b{display:block;font-family:var(--f-display);font-weight:400;font-size:34px;color:var(--ink)}
 .result .stats{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;font-size:13.5px;color:var(--muted)}
@@ -196,7 +203,7 @@ kbd{font-family:var(--f-body);font-size:11px;border:1px solid var(--line);border
 </div>
 <div class="toast glass" id="toast"></div>
 <div class="bhud glass" id="bhud" hidden>
-  <div class="sc me"><small>나</small><b id="scMe">0</b></div>
+  <div class="sc me"><small id="meLbl">나</small><b id="scMe">0</b></div>
   <span class="clock" id="clock">3:00</span>
   <div class="sc npc"><small id="rankLbl">순위</small><b id="scNpc">-</b></div>
 </div>
@@ -204,10 +211,12 @@ kbd{font-family:var(--f-body);font-size:11px;border:1px solid var(--line);border
 <div class="fullpower" id="fullpower"></div>
 <div class="result" id="result" hidden>
   <div class="introcard glass">
-    <div class="eyebrow">DRY BATTLE · 결과</div>
+    <div class="eyebrow" id="rEye">DRY BATTLE · 결과</div>
     <div class="big" id="rTitle"></div>
     <ol class="rank" id="rRank"></ol>
     <ul class="stats" id="rStats"></ul>
+    <div class="lbsend" id="lbSendRow" hidden><input id="lbName" maxlength="10" autocomplete="off" aria-label="순위에 올릴 이름"><button type="button" class="cta" id="lbSend">순위에 올리기</button></div>
+    <p class="lbnote" id="lbNote"></p>
     <div class="row2"><button class="cta" id="again" type="button">한 판 더</button><button class="cta ghost" id="toHeal" type="button">힐링 모드로</button></div>
     <a class="buy" href="https://smartstore.naver.com/thirdline/products/12945665241" target="_blank" rel="noopener">빠르게 마르는 드라이기 보기</a>
   </div>
@@ -219,6 +228,7 @@ kbd{font-family:var(--f-body);font-size:11px;border:1px solid var(--line);border
     <h2>비에 젖은 야생동물들을<br>다 같이 말려 주세요</h2>
     <div class="modes" role="group" aria-label="모드">
       <button type="button" data-mode="heal" aria-pressed="true"><b>힐링 모드</b><small>천천히, 다 같이 말려요</small></button>
+      <button type="button" data-mode="survival" aria-pressed="false"><b>얼마나 버틸까</b><small>젖은 친구가 쌓여 추위가 꽉 차면 끝 · 기록 순위</small></button>
       <button type="button" data-mode="battle" aria-pressed="false"><b>드라이 대결 · vs 직원</b><small>3분 개인전 · 나와 직원 모두 각자 점수</small></button>
     </div>
     <div class="diff" id="diffRow" hidden><span>난이도</span><button type="button" data-d="easy" aria-pressed="false">쉬움</button><button type="button" data-d="normal" aria-pressed="true">보통</button><button type="button" data-d="hard" aria-pressed="false">어려움</button></div>
@@ -1034,7 +1044,7 @@ $("sw").addEventListener("click", e => { const b = e.target.closest("button"); i
 $("enter").addEventListener("click", () => {
   MEO.nick = cleanName($("nick").value) || MEO.nick; store.set("ds.nick", MEO.nick);
   $("intro").hidden = true; entered = true; unlockAudio(); pushPresence(true); renderPeople(); fadeHint();
-  if (pickedMode === "battle") startBattle();
+  if (pickedMode === "battle") startBattle(); else if (pickedMode === "survival") startSurvival();
 });
 
 /* ================= network ================= */
@@ -1049,13 +1059,13 @@ function pushPresence(force){ if (!net) return; const now = performance.now(); i
 // 50 chairs do not fit one message: send the chairs that changed, topped up round-robin, ten at a time
 const dirtySeats = new Set(); let rrSeat = 0;
 function sendState(){
-  if (!net) return;
+  if (!net || (battle.on && battle.mode === "survival")) return;
   const pick = [...dirtySeats].slice(0, 10); dirtySeats.clear();
   while (pick.length < 10){ if (!pick.includes(rrSeat)) pick.push(rrSeat); rrSeat = (rrSeat + 1) % seats.length; }
   net.emit("st", { s:pick.map(i => [i, seats[i].seq, seats[i].a && seats[i].state === "sit" ? encodeWet(seats[i].a) : "", Math.round((seats[i].spinGoal || 0)/(Math.PI/4))]), d:doneCount });
 }
 function onState(d){
-  if (!d || typeof d !== "object") return;
+  if (!d || typeof d !== "object" || (battle.on && battle.mode === "survival")) return;
   if (Number.isInteger(d.d) && d.d > doneCount && d.d < 1e7){ doneCount = d.d; $("doneN").textContent = doneCount; }
   if (!Array.isArray(d.s)) return;
   d.s.slice(0, 16).forEach(row => {
@@ -1069,12 +1079,12 @@ function onState(d){
 function renderPeople(){
   const list = [{ n:MEO.nick, c:MEO.top, me:true, b:blow.on }];
   others.forEach(o => { if (o.data && o.data.in) list.push({ n:cleanName(o.data.n) || "미용사", c:/^#[0-9a-f]{6}$/i.test(o.data.c || "") ? o.data.c : "#999", b:o.data.b >= 0 }); });
-  const staffN = battle.on ? DIFF[battle.diff].n : Math.max(0, STAFF.length - (list.length - 1));
+  const staffN = battle.on ? (battle.mode === "survival" ? 0 : DIFF[battle.diff].n) : Math.max(0, STAFF.length - (list.length - 1));
   npcs.slice(0, staffN).forEach(n => list.push({ n:n.n, c:n.top, b:n.seat >= 0 }));
   const realN = list.length - staffN;
-  $("cnt").textContent = battle.on ? `개인전 · 나 + 직원 ${staffN}명 (${DIFF[battle.diff].label})` : realN > 1 ? `지금 ${realN}명 + 직원 ${staffN}명이 말리는 중` : `직원 ${staffN}명과 함께 말리는 중`;
+  $("cnt").textContent = battle.on && battle.mode === "survival" ? "혼자 버티는 중" : battle.on ? `개인전 · 나 + 직원 ${staffN}명 (${DIFF[battle.diff].label})` : realN > 1 ? `지금 ${realN}명 + 직원 ${staffN}명이 말리는 중` : `직원 ${staffN}명과 함께 말리는 중`;
   const ul = $("plist"); ul.textContent = "";
-  if (battle.on){
+  if (battle.on && battle.mode === "duel"){
     standings().forEach((r, k) => { const li = document.createElement("li"); const i = document.createElement("i"); i.style.background = r.c; li.appendChild(i); li.appendChild(document.createTextNode(`${1 + standings().filter(x => x.score > r.score).length}. ${r.n} · ${r.score}점`)); if (r.me){ const em = document.createElement("em"); em.textContent = "나"; li.appendChild(em); } ul.appendChild(li); });
     return;
   }
@@ -1131,7 +1141,7 @@ const battle = { on:false, diff:"normal", t:0, me:0, npc:0, ionT:0, cycleT:0, he
 let pickedMode = "heal";
 document.querySelectorAll(".modes button").forEach(b => b.addEventListener("click", () => {
   pickedMode = b.dataset.mode; document.querySelectorAll(".modes button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
-  $("diffRow").hidden = pickedMode !== "battle"; $("enter").textContent = pickedMode === "battle" ? "대결 시작" : "드라이샵 들어가기";
+  $("diffRow").hidden = pickedMode !== "battle"; $("enter").textContent = pickedMode === "battle" ? "대결 시작" : pickedMode === "survival" ? "버티기 시작" : "드라이샵 들어가기";
 }));
 document.querySelectorAll("#diffRow button").forEach(b => b.addEventListener("click", () => {
   battle.diff = b.dataset.d; document.querySelectorAll("#diffRow button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
@@ -1161,7 +1171,7 @@ function spawnItem(){
 function clearItems(){ battle.items.forEach(it => scene.remove(it.g)); battle.items = []; }
 function takeItem(it){
   scene.remove(it.g); battle.items.splice(battle.items.indexOf(it), 1);
-  if (it.kind === "ion"){ battle.ionT = ITEM_KINDS.ion.dur; battle.stats.ionItems = (battle.stats.ionItems || 0) + 1; toast("플라스마 음이온 케어 · 10초 동안 말린 친구는 점수 1.5배"); }
+  if (it.kind === "ion"){ battle.ionT = ITEM_KINDS.ion.dur; battle.stats.ionItems = (battle.stats.ionItems || 0) + 1; toast(battle.mode === "survival" ? "플라스마 음이온 케어 · 10초 동안 말린 친구는 추위를 더 많이 녹여요" : "플라스마 음이온 케어 · 10초 동안 말린 친구는 점수 1.5배"); }
   else { battle.cycleT = ITEM_KINDS.cycle.dur; battle.stats.cycleItems = (battle.stats.cycleItems || 0) + 1; toast("열풍·냉풍 자동순환 · 20초 동안 뜨거워하지 않아요"); }
 }
 function setHeat(h){ battle.heat = h; const b = $("heatBtn"); b.className = "heat " + (battle.cycleT > 0 ? "auto" : h); b.textContent = battle.cycleT > 0 ? "자동순환" : h === "hot" ? "열풍" : "냉풍"; }
@@ -1169,6 +1179,7 @@ $("heatBtn").addEventListener("click", () => { if (battle.cycleT <= 0) setHeat(b
 addEventListener("keydown", e => { if (e.target.tagName === "INPUT") return; if ((e.key === "f" || e.key === "F") && battle.on && battle.cycleT <= 0) setHeat(battle.heat === "hot" ? "cool" : "hot"); });
 function startBattle(){
   clearItems(); exitGroom();
+  battle.mode = "duel"; $("meLbl").textContent = "나"; $("scNpc").parentNode.className = "sc npc"; $("lbSendRow").hidden = true; $("lbNote").textContent = ""; $("rEye").textContent = "DRY BATTLE · 결과";
   battle.on = true; battle.ending = false; battle.t = 180; battle.me = 0; battle.npcScore = [0, 0, 0, 0]; battle.ionT = 0; battle.cycleT = 0; battle.spawnT = 3; battle.stats = { meDone:0, npcDone:0, ionDone:0, full:0, fled:0 };
   setHeat("hot");
   // every chair gets a fresh, soaking-wet friend
@@ -1195,8 +1206,101 @@ function endBattle(){
    st.fled ? `뜨거워서 도망간 친구 ${st.fled}마리` : "뜨거워서 도망간 친구 없음"].forEach(x => { const li = document.createElement("li"); li.textContent = x; ul.appendChild(li); });
   $("result").hidden = false; renderPeople();
 }
-$("again").addEventListener("click", () => { $("result").hidden = true; startBattle(); });
-$("toHeal").addEventListener("click", () => { $("result").hidden = true; $("acts").hidden = false; renderPeople(); });
+$("again").addEventListener("click", () => { $("result").hidden = true; if (battle.mode === "survival") startSurvival(); else startBattle(); });
+$("toHeal").addEventListener("click", () => { $("result").hidden = true; $("acts").hidden = false; refillSeats(); renderPeople(); });
+/* ---- 얼마나 버틸까: survive as long as you can ---- */
+const LB = { project:"hair-dry", key:"AIzaSyC6Om4e2dichdLTTyJ366nf-r6pozmIyno" };      // set on the public site: shared Firestore board; otherwise this device only
+const fmtTime = s => { s = Math.max(0, s); const m = Math.floor(s/60), r = Math.floor(s%60); return m ? `${m}분 ${r}초` : `${r}초`; };
+function emptySeat(s){ if (s.a) dropAnimal(s.a); s.a = null; s.state = "empty"; s.label.style.opacity = 0; if (chairGroups[s.i]) chairGroups[s.i].rotation.y = CHAIRS[s.i].face; }
+function refillSeats(){ seats.forEach(s => { if (!s.a){ seatFriend(s, s.seq + 1, true); dirtySeats.add(s.i); } }); }
+function startSurvival(){
+  clearItems(); exitGroom();
+  battle.mode = "survival"; battle.on = true; battle.ending = false; battle.t = 0; battle.cold = 0; battle.ionT = 0; battle.cycleT = 0; battle.spawnT = 6; battle.next = 4;
+  battle.stats = { meDone:0, ionDone:0, full:0, fled:0 };
+  setHeat("hot");
+  leavers.forEach(L => dropAnimal(L.a)); leavers.length = 0;
+  // start with four wet friends near you; the rest of the chairs are empty
+  const near = seats.map(s => [s, Math.hypot(P.pos.x - CHAIRS[s.i].x, P.pos.z - CHAIRS[s.i].z)]).sort((a, b) => a[1] - b[1]).slice(0, 4).map(x => x[0]);
+  seats.forEach(s => { if (near.includes(s)) seatFriend(s, s.seq + 1, false); else emptySeat(s); });
+  $("meLbl").textContent = "말린 친구"; $("rankLbl").textContent = "추위";
+  $("bhud").hidden = false; $("heatBtn").hidden = false; $("abarW").hidden = false; $("result").hidden = true; $("acts").hidden = true;
+  toast("젖은 친구가 쌓이면 추위가 올라가요. 꽉 차기 전에 말려 주세요!");
+  renderPeople();
+}
+function wetCount(){ return seats.filter(s => s.a && (s.state === "sit" || s.state === "enter")).length; }
+function updateSurvival(dt){
+  battle.t += dt;
+  // friends arrive faster and faster
+  battle.next -= dt;
+  const empties = seats.filter(s => !s.a);
+  if (battle.next <= 0 && empties.length){
+    const pick = empties.map(s => [s, Math.hypot(P.pos.x - CHAIRS[s.i].x, P.pos.z - CHAIRS[s.i].z) + Math.random()*10]).sort((a, b) => a[1] - b[1])[0][0];
+    seatFriend(pick, pick.seq + 1, true);
+    battle.next = Math.max(2.4, 11 - battle.t*.055) * (.8 + Math.random()*.4);
+  }
+  const w = wetCount();
+  battle.cold = clamp(battle.cold + dt*(w - 3)*.0065, 0, 1);
+  const pct = Math.floor(battle.cold*100);
+  $("clock").textContent = `${Math.floor(battle.t/60)}:${String(Math.floor(battle.t%60)).padStart(2, "0")}`;
+  $("clock").classList.toggle("hurry", battle.cold > .75);
+  $("scMe").textContent = battle.stats.meDone; $("scNpc").textContent = pct + "%";
+  $("scNpc").parentNode.className = "sc npc " + (battle.cold > .75 ? "freeze" : "cold");
+  if (battle.cold >= 1 && !battle.ending){ battle.ending = true; endSurvival(); }
+}
+async function lbTop(){
+  if (!LB){ try { const a = JSON.parse(localStorage.getItem("ds.lb") || "[]"); return Array.isArray(a) ? a.slice(0, 10) : []; } catch(e){ return []; } }
+  const r = await fetch(`https://firestore.googleapis.com/v1/projects/${LB.project}/databases/(default)/documents:runQuery?key=${LB.key}`, { method:"POST", headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({ structuredQuery:{ from:[{ collectionId:"scores" }], orderBy:[{ field:{ fieldPath:"sec" }, direction:"DESCENDING" }], limit:10 } }) });
+  if (!r.ok) throw new Error("board");
+  const rows = await r.json();
+  return rows.filter(x => x.document).map(x => { const f = x.document.fields || {}; return { id:x.document.name.split("/").pop(), name:cleanName(f.name && f.name.stringValue) || "익명", sec:+(f.sec && (f.sec.doubleValue ?? f.sec.integerValue)) || 0, dried:+(f.dried && f.dried.integerValue) || 0 }; });
+}
+async function lbSubmit(name, sec, dried){
+  const id = Math.random().toString(36).slice(2, 12) + Date.now().toString(36);
+  if (!LB){
+    let a = []; try { a = JSON.parse(localStorage.getItem("ds.lb") || "[]"); if (!Array.isArray(a)) a = []; } catch(e){}
+    a.push({ id, name, sec, dried }); a.sort((x, y) => y.sec - x.sec); try { localStorage.setItem("ds.lb", JSON.stringify(a.slice(0, 50))); } catch(e){}
+    return id;
+  }
+  const r = await fetch(`https://firestore.googleapis.com/v1/projects/${LB.project}/databases/(default)/documents:commit?key=${LB.key}`, { method:"POST", headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({ writes:[{ update:{ name:`projects/${LB.project}/databases/(default)/documents/scores/${id}`, fields:{ name:{ stringValue:name }, sec:{ doubleValue:sec }, dried:{ integerValue:String(dried) } } },
+      updateTransforms:[{ fieldPath:"at", setToServerValue:"REQUEST_TIME" }], currentDocument:{ exists:false } }] }) });
+  if (!r.ok) throw new Error("submit");
+  return id;
+}
+function drawBoard(rows, mineId, mineRow){
+  const ol = $("rRank"); ol.textContent = "";
+  if (!rows.length && !mineRow){ const li = document.createElement("li"); li.textContent = "아직 기록이 없어요. 첫 기록을 올려 보세요!"; ol.appendChild(li); return; }
+  rows.forEach((r, k) => { const li = document.createElement("li"); if (r.id === mineId) li.className = "new";
+    const em = document.createElement("em"); em.textContent = (k + 1) + "위"; const sp = document.createElement("span"); sp.textContent = `${r.name} · ${r.dried}마리`;
+    const b = document.createElement("b"); b.textContent = fmtTime(r.sec); li.append(em, sp, b); ol.appendChild(li); });
+}
+function endSurvival(){
+  battle.on = false; clearItems(); exitGroom();
+  $("bhud").hidden = true; $("heatBtn").hidden = true; $("abarW").hidden = true; $("chips").textContent = ""; $("fullpower").style.opacity = 0;
+  const sec = Math.round(battle.t*10)/10, dried = battle.stats.meDone;
+  $("rEye").textContent = "얼마나 버틸까 · 기록";
+  $("rTitle").textContent = `${fmtTime(sec)} 버텼어요`;
+  const st = battle.stats, ul = $("rStats"); ul.textContent = "";
+  [`말린 친구 ${dried}마리`, `플라스마 음이온 케어로 마무리한 친구 ${st.ionDone}마리`, st.fled ? `뜨거워서 도망간 친구 ${st.fled}마리` : "뜨거워서 도망간 친구 없음"]
+    .forEach(x => { const li = document.createElement("li"); li.textContent = x; ul.appendChild(li); });
+  $("lbName").value = MEO.nick; $("lbSend").disabled = false; $("lbSend").textContent = "순위에 올리기";
+  $("lbSendRow").hidden = sec < 10;
+  $("lbNote").textContent = sec < 10 ? "10초 넘게 버티면 순위에 올릴 수 있어요." : LB ? "모든 사람이 함께 보는 순위표예요." : "이 기기에만 남는 순위표예요.";
+  $("rRank").textContent = ""; const li = document.createElement("li"); li.textContent = "순위표를 불러오는 중…"; $("rRank").appendChild(li);
+  battle.lastRun = { sec, dried };
+  lbTop().then(rows => drawBoard(rows)).catch(() => { $("rRank").textContent = ""; $("lbNote").textContent = "순위표를 불러오지 못했어요. 인터넷 연결을 확인해 주세요."; });
+  $("result").hidden = false; renderPeople();
+}
+$("lbSend").addEventListener("click", async () => {
+  const name = cleanName($("lbName").value); if (!name){ $("lbNote").textContent = "이름을 적어 주세요 (10자까지)."; return; }
+  const run = battle.lastRun; if (!run) return;
+  $("lbSend").disabled = true; $("lbSend").textContent = "올리는 중…";
+  try { const id = await lbSubmit(name, run.sec, run.dried); $("lbSend").textContent = "올렸어요"; $("lbSendRow").hidden = true;
+    const rows = await lbTop(); const at = rows.findIndex(r => r.id === id);
+    drawBoard(rows, id); $("lbNote").textContent = at >= 0 ? `${at + 1}위에 올랐어요!` : "기록을 올렸어요. 10위 안에는 아직 못 들었어요.";
+  } catch(e){ $("lbSend").disabled = false; $("lbSend").textContent = "다시 올리기"; $("lbNote").textContent = "올리지 못했어요. 잠시 후 다시 눌러 주세요."; }
+});
 function standings(){
   const list = [{ n:MEO.nick, c:MEO.top, score:battle.me, me:true }];
   npcs.slice(0, DIFF[battle.diff].n).forEach((n, k) => list.push({ n:n.n, c:n.top, score:battle.npcScore[k] || 0 }));
@@ -1208,14 +1312,19 @@ function scoreFor(s, who){
 }
 function updateBattle(dt, T){
   if (!battle.on) return;
-  battle.t -= dt; battle.ionT = Math.max(0, battle.ionT - dt);
+  const surv = battle.mode === "survival";
+  if (!surv) battle.t -= dt;
+  battle.ionT = Math.max(0, battle.ionT - dt);
   const hadCycle = battle.cycleT > 0; battle.cycleT = Math.max(0, battle.cycleT - dt);
   if (hadCycle && battle.cycleT <= 0) setHeat(battle.heat);
   if (battle.cycleT > 0 && $("heatBtn").className !== "heat auto") setHeat(battle.heat);
-  const sec = Math.max(0, Math.ceil(battle.t));
-  $("clock").textContent = `${Math.floor(sec/60)}:${String(sec%60).padStart(2, "0")}`; $("clock").classList.toggle("hurry", sec <= 20);
-  $("scMe").textContent = battle.me;
-  const bd = standings(), rk = 1 + bd.filter(r => r.score > battle.me).length; $("scNpc").textContent = `${rk}/${bd.length}`; $("rankLbl").textContent = "순위";
+  if (surv) updateSurvival(dt);
+  else {
+    const sec = Math.max(0, Math.ceil(battle.t));
+    $("clock").textContent = `${Math.floor(sec/60)}:${String(sec%60).padStart(2, "0")}`; $("clock").classList.toggle("hurry", sec <= 20);
+    $("scMe").textContent = battle.me;
+    const bd = standings(), rk = 1 + bd.filter(r => r.score > battle.me).length; $("scNpc").textContent = `${rk}/${bd.length}`; $("rankLbl").textContent = "순위";
+  }
   const chips = [];
   if (battle.ionT > 0) chips.push(`<span class="chip glass ion">음이온 케어 ${Math.ceil(battle.ionT)}초</span>`);
   if (battle.cycleT > 0) chips.push(`<span class="chip glass cyc">자동순환 ${Math.ceil(battle.cycleT)}초</span>`);
@@ -1239,14 +1348,15 @@ function updateBattle(dt, T){
       else s.annoy = Math.max(0, (s.annoy || 0) - dt*.35);
       if (s.annoy > .6 && !s.hotSaid){ s.hotSaid = true; say(s, "앗, 조금 뜨거워요… 냉풍으로 바꿔 주세요!"); }
       if (s.annoy >= 1){
-        s.state = "happy"; s.t = 0; s.fled = true; battle.me = Math.max(0, battle.me - 1); battle.stats.fled++;
-        say(s, "너무 뜨거워요! 집에 갈래요!"); toast("뜨거워서 친구가 도망갔어요 · -1점"); dirtySeats.add(s.i);
+        s.state = "happy"; s.t = 0; s.fled = true; battle.stats.fled++; dirtySeats.add(s.i);
+        if (surv){ battle.cold = Math.min(1, battle.cold + .08); say(s, "너무 뜨거워요! 집에 갈래요!"); toast("뜨거워서 친구가 도망갔어요 · 추위 +8%"); }
+        else { battle.me = Math.max(0, battle.me - 1); say(s, "너무 뜨거워요! 집에 갈래요!"); toast("뜨거워서 친구가 도망갔어요 · -1점"); }
       }
     }
   }
   if (groom.seat >= 0){ const s = seats[groom.seat]; $("abar").style.width = Math.min(100, (s.annoy || 0)*100) + "%"; }
-  battle.boardT = (battle.boardT || 0) - dt; if (battle.boardT <= 0){ battle.boardT = 1; renderPeople(); }
-  if (battle.t <= 0 && !battle.ending){ battle.ending = true; endBattle(); }
+  if (!surv){ battle.boardT = (battle.boardT || 0) - dt; if (battle.boardT <= 0){ battle.boardT = 1; renderPeople(); } }
+  if (!surv && battle.t <= 0 && !battle.ending){ battle.ending = true; endBattle(); }
 }
 
 /* ================= staff: a few groomers so nobody dries alone ================= */
@@ -1274,7 +1384,7 @@ function npcPick(n, active){
   n.seat = cand[0][0].i; n.work = 0; npcRoute(n, groomSpot(n.seat));
 }
 function updateNpcs(dt, T, blowers, people){
-  const want = battle.on ? DIFF[battle.diff].n : Math.max(0, STAFF.length - people);     // fewer staff when more real people are here
+  const want = battle.on ? (battle.mode === "survival" ? 0 : DIFF[battle.diff].n) : Math.max(0, STAFF.length - people);     // fewer staff when more real people are here
   const active = npcs.slice(0, want);
   npcs.forEach((n, k) => {
     const on = k < want && entered;
@@ -1454,6 +1564,7 @@ function frame(){
       if (s.t > 1.2){
         // the dry friend heads home on its own; the next friend starts walking in right away
         a.pivot.position.y = 0; leavers.push({ a, path:s.path, t:0 });
+        if (battle.on && battle.mode === "survival"){ s.a = null; s.state = "empty"; s.label.style.opacity = 0; return; }
         seatFriend(s, s.seq + 1, true, true); dirtySeats.add(s.i); sendState();
         if (Math.hypot(P.pos.x - CHAIRS[s.i].x, P.pos.z - CHAIRS[s.i].z) < 8) toast("새 친구가 들어오고 있어요");
       }
@@ -1492,7 +1603,7 @@ function frame(){
     });
   }
   seats.forEach(s => {
-    const a = s.a; if (!a) return;
+    const a = s.a; if (!a){ s.label.style.opacity = 0; return; }
     const avg = updateFur(a, T);
     const dry = 1 - avg;
     if (a.hugT > 0) a.hugT -= dt;
@@ -1516,7 +1627,12 @@ function frame(){
       if (avg < .06){
         s.state = "happy"; s.t = 0; for (let k=0;k<TUFTS;k++) a.wet[k] = 0; a.dirty = true;
         doneCount++; $("doneN").textContent = doneCount; dirtySeats.add(s.i);
-        if (battle.on && s.owner && (s.owner === "me" || s.owner[0] === "n")){
+        if (battle.on && battle.mode === "survival"){
+          if (s.owner === "me"){ battle.stats.meDone++; if (s.ionHit) battle.stats.ionDone++; }
+          const melt = s.ionHit ? .08 : .05; battle.cold = Math.max(0, battle.cold - melt);
+          toast(`보송! 추위 -${Math.round(melt*100)}%${s.ionHit ? " · 음이온 케어" : ""}`);
+          if (Math.random() < .3) say(s, THIRDLINE);
+        } else if (battle.on && s.owner && (s.owner === "me" || s.owner[0] === "n")){
           const pts = scoreFor(s, s.owner);
           if (s.owner === "me"){
             battle.me = Math.round((battle.me + pts)*10)/10; battle.stats.meDone++;
