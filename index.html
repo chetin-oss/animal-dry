@@ -180,7 +180,7 @@ kbd{font-family:var(--f-body);font-size:11px;border:1px solid var(--line);border
 
 <div class="brand glass">
   <h1>동물 드라이샵</h1>
-  <p>비 오는 밤, 젖은 야생동물들이 몸을 말리러 와요</p>
+  <p>비 오는 밤, 젖은 동물들이 몸을 말리러 와요</p>
   <span class="done">오늘 보송하게 돌려보낸 친구 <b id="doneN">0</b>마리</span>
 </div>
 <div class="topr">
@@ -225,7 +225,7 @@ kbd{font-family:var(--f-body);font-size:11px;border:1px solid var(--line);border
 <div class="intro" id="intro">
   <div class="introcard glass">
     <div class="eyebrow">RAINY NIGHT · DRY SHOP</div>
-    <h2>비에 젖은 야생동물들을<br>다 같이 말려 주세요</h2>
+    <h2>비에 젖은 동물들을<br>다 같이 말려 주세요</h2>
     <div class="modes" role="group" aria-label="모드">
       <button type="button" data-mode="heal" aria-pressed="true"><b>힐링 모드</b><small>천천히, 다 같이 말려요</small></button>
       <button type="button" data-mode="survival" aria-pressed="false"><b>얼마나 버틸까</b><small>젖은 친구가 5마리 넘게 쌓이면 추위가 올라가요 · 기록 순위</small></button>
@@ -270,7 +270,9 @@ const SPECIES = [
   { id:"hare", name:"산토끼", line:"풀숲이 다 젖어서 귀까지 축축해요.", fur:"#9c8a76", wet:"#3e342b", face:"#ece2d4", dark:"#2a231e", nose:"#d98a8f", body:[.24,.29,.23], head:.17, ears:"long", tail:"puff", pat:"plain", size:.95 },
   { id:"leopardcat", name:"삵", line:"…흥. 비 맞은 건 처음이야.", fur:"#b8915e", wet:"#4a3620", face:"#f1e4cf", dark:"#2a1d12", nose:"#c97a6f", body:[.24,.3,.22], head:.18, ears:"pointy", tail:"long", pat:"spots", size:.95 },
   { id:"boar", name:"아기 멧돼지", line:"진흙 웅덩이가 너무 좋았어요.", fur:"#7f5f42", wet:"#33251a", face:"#9a7a5c", dark:"#3a2a1e", nose:"#3a2a22", body:[.30,.30,.30], head:.2, ears:"pointy", tail:"stub", pat:"stripes", size:1 },
-  { id:"badger", name:"오소리", line:"굴에 물이 차서 나왔어요.", fur:"#8f8a84", wet:"#36332f", face:"#f2efe9", dark:"#141312", nose:"#141312", body:[.32,.3,.3], head:.2, ears:"tiny", tail:"stub", pat:"badger", size:1 }
+  { id:"badger", name:"오소리", line:"굴에 물이 차서 나왔어요.", fur:"#8f8a84", wet:"#36332f", face:"#f2efe9", dark:"#141312", nose:"#141312", body:[.32,.3,.3], head:.2, ears:"tiny", tail:"stub", pat:"badger", size:1 },
+  { id:"pomeranian", name:"포메라니안", line:"산책하다 소나기를 만났어요! 털이 다 눌렸어요.", fur:"#f7f3ec", wet:"#9e978c", face:"#fbf8f2", dark:"#2a2320", nose:"#1b1715", body:[.29,.31,.28], head:.21, ears:"pointy", tail:"bushy", pat:"plain", size:.95 },
+  { id:"kitten", name:"아기 고양이", line:"…냥. 비 맞는 건 싫어요.", fur:"#e59a52", wet:"#7a4a22", face:"#fbf5ec", dark:"#c4682a", nose:"#e8949a", body:[.22,.27,.21], head:.18, ears:"pointy", tail:"long", pat:"kitten", size:.85 }
 ];
 const TUFTS = 120;          // wetness samples per animal; fixed, so each animal's wetness travels as one short string
 // five long mirror islands; five chairs on each side, every friend facing the mirror
@@ -541,6 +543,11 @@ function furColor(sp, part, n, p){
     case "chipmunk": if (part === "body" && n.z < -.2){ const b = Math.abs(n.x); if (b < .08) return dark; if (b < .22) return face; if (b < .3) return dark; } break;
     case "spots": if (Math.sin(n.x*14 + 1.3)*Math.sin(n.y*12 + .4)*Math.sin(n.z*13 + 2.1) > .28) return dark; if (part === "body" && n.z > .5) return face; break;
     case "stripes": if (part === "body" && Math.sin(n.y*2 + Math.atan2(n.z, n.x)*5) > .55) return C("#d9c39b"); break;
+    case "kitten":
+      if (part === "body" && n.z > .25 && n.y < .55) return face;                       // white chest and belly
+      if (part === "head" && (n.y < -.15 || (n.z > .2 && Math.abs(n.x) < .22 && n.y < .35))) return face;   // white muzzle
+      if ((part === "head" && n.y > .3) || (part === "body" && n.z < -.1) || part === "tail"){ if (Math.sin((part === "tail" ? p.tailT*18 : n.y*9 + n.x*2)) > .5) return dark; }
+      break;
     case "badger": if (part === "head"){ if (Math.abs(n.x) < .14 && n.y > -.2) return face; if (Math.abs(n.x) < .42) return dark; return face; } break;
   }
   return fur;
@@ -560,7 +567,7 @@ function buildAnimal(sp, seed){
   const headG = new THREE.Group(); headG.position.copy(headC); pivot.add(headG);
   const head = new THREE.Mesh(new THREE.SphereGeometry(headR, 24, 18), skinMat); head.castShadow = true; headG.add(head);
   // muzzle and face
-  const snoutLen = sp.id === "boar" ? 1.15 : sp.id === "otter" || sp.id === "badger" ? .8 : sp.id === "fox" || sp.id === "waterdeer" ? .95 : .7;
+  const snoutLen = sp.id === "kitten" ? .55 : sp.id === "pomeranian" ? .75 : sp.id === "boar" ? 1.15 : sp.id === "otter" || sp.id === "badger" ? .8 : sp.id === "fox" || sp.id === "waterdeer" ? .95 : .7;
   const snout = new THREE.Mesh(new THREE.SphereGeometry(headR*.48, 18, 12), faceMat); snout.scale.set(1, .75, snoutLen); snout.position.set(0, -headR*.22, headR*.78); headG.add(snout);
   const nose = new THREE.Mesh(new THREE.SphereGeometry(headR*(sp.id === "boar" ? .2 : .12), 14, 10), M({ color:C(sp.nose), roughness:.3 }));
   nose.position.set(0, -headR*.12, headR*(.78 + snoutLen*.45)); if (sp.id === "boar") nose.scale.set(1.3, 1, .5); headG.add(nose);
@@ -572,6 +579,8 @@ function buildAnimal(sp, seed){
     const e = new THREE.Mesh(new THREE.SphereGeometry(headR*.12, 14, 10), mat.eye); e.position.set(k*headR*.38, headR*.12, headR*.86); e.scale.z = .6; headG.add(e); eyes.push(e);
     const sh = new THREE.Mesh(new THREE.SphereGeometry(headR*.035, 8, 6), mat.shine); sh.position.set(k*headR*.38 + headR*.04, headR*.17, headR*.93); headG.add(sh); e.userData.shine = sh;
   });
+  if (sp.id === "pomeranian"){ const tg = new THREE.Mesh(new THREE.SphereGeometry(headR*.12, 12, 8), M({ color:0xe8768a, roughness:.5 })); tg.scale.set(1, .5, 1.4); tg.position.set(0, -headR*.42, headR*1.0); headG.add(tg); }
+  if (sp.id === "kitten"){ [-1,1].forEach(k => { for (let w=-1; w<=1; w++){ const wh = new THREE.Mesh(new THREE.CylinderGeometry(headR*.006, headR*.006, headR*.5, 4), M({ color:0xffffff, roughness:.6 })); wh.rotation.z = Math.PI/2 + k*(.08 + w*.1); wh.position.set(k*headR*.42, -headR*(.22 + w*.05), headR*.86); headG.add(wh); } }); }
   if (sp.id === "waterdeer"){ [-1,1].forEach(k => { const t = new THREE.Mesh(new THREE.ConeGeometry(headR*.05, headR*.32, 8), M({ color:0xf5f0e6, roughness:.4 })); t.position.set(k*headR*.14, -headR*.48, headR*.98); t.rotation.x = Math.PI; headG.add(t); }); }
   // ears (they droop while wet)
   const ears = [];
@@ -1085,7 +1094,7 @@ function renderPeople(){
   $("cnt").textContent = battle.on && battle.mode === "survival" ? "혼자 버티는 중" : battle.on ? `개인전 · 나 + 직원 ${staffN}명 (${DIFF[battle.diff].label})` : realN > 1 ? `지금 ${realN}명 + 직원 ${staffN}명이 말리는 중` : `직원 ${staffN}명과 함께 말리는 중`;
   const ul = $("plist"); ul.textContent = "";
   if (battle.on && battle.mode === "duel"){
-    standings().forEach((r, k) => { const li = document.createElement("li"); const i = document.createElement("i"); i.style.background = r.c; li.appendChild(i); li.appendChild(document.createTextNode(`${1 + standings().filter(x => x.score > r.score).length}. ${r.n} · ${r.score}점`)); if (r.me){ const em = document.createElement("em"); em.textContent = "나"; li.appendChild(em); } ul.appendChild(li); });
+    standings().forEach((r, k) => { const li = document.createElement("li"); const i = document.createElement("i"); i.style.background = r.c; li.appendChild(i); li.appendChild(document.createTextNode(`${1 + standings().filter(x => x.score > r.score).length}. ${r.n} · ${r.dried}마리 · ${r.score}점`)); if (r.me){ const em = document.createElement("em"); em.textContent = "나"; li.appendChild(em); } ul.appendChild(li); });
     return;
   }
   list.slice(0, 7).forEach(p => { const li = document.createElement("li"); const i = document.createElement("i"); i.style.background = p.c; li.appendChild(i); li.appendChild(document.createTextNode(p.n)); if (p.me){ const em = document.createElement("em"); em.textContent = "나"; li.appendChild(em); } else if (p.b){ const em = document.createElement("em"); em.textContent = "말리는 중"; li.appendChild(em); } ul.appendChild(li); });
@@ -1132,7 +1141,7 @@ const c0 = s => CHAIRS[s.i];
 /* ================= dry battle: you vs the staff ================= */
 // free-for-all: every staff member plays for themselves with a dryer like yours
 const DIFF = { easy:{ n:2, power:.55, label:"쉬움" }, normal:{ n:3, power:.75, label:"보통" }, hard:{ n:3, power:.9, label:"어려움", steal:true } };
-const POINTS = { bear:3, boar:3, badger:3, raccoon:2, fox:2, otter:2, waterdeer:2, leopardcat:2, chipmunk:1, hare:1 };
+const POINTS = { bear:3, boar:3, badger:3, raccoon:2, fox:2, otter:2, waterdeer:2, leopardcat:2, chipmunk:1, hare:1, pomeranian:2, kitten:1 };
 const ITEM_KINDS = {
   ion:{ name:"플라스마 음이온 케어", dur:10, color:0x6fb8ff },
   cycle:{ name:"열풍·냉풍 자동순환", dur:20, color:0xff8a6a }
@@ -1180,7 +1189,7 @@ addEventListener("keydown", e => { if (e.target.tagName === "INPUT") return; if 
 function startBattle(){
   clearItems(); exitGroom();
   battle.mode = "duel"; $("meLbl").textContent = "나"; $("scNpc").parentNode.className = "sc npc"; $("lbSendRow").hidden = true; $("lbNote").textContent = ""; $("rEye").textContent = "DRY BATTLE · 결과";
-  battle.on = true; battle.ending = false; battle.t = 180; battle.me = 0; battle.npcScore = [0, 0, 0, 0]; battle.ionT = 0; battle.cycleT = 0; battle.spawnT = 3; battle.stats = { meDone:0, npcDone:0, ionDone:0, full:0, fled:0 };
+  battle.on = true; battle.ending = false; battle.t = 180; battle.me = 0; battle.npcScore = [0, 0, 0, 0]; battle.npcDried = [0, 0, 0, 0]; battle.ionT = 0; battle.cycleT = 0; battle.spawnT = 3; battle.stats = { meDone:0, npcDone:0, ionDone:0, full:0, fled:0 };
   setHeat("hot");
   // every chair gets a fresh, soaking-wet friend
   seats.forEach(s => { if (s.state === "sit" || s.state === "enter") { seatFriend(s, s.seq + 1, false); dirtySeats.add(s.i); } });
@@ -1197,7 +1206,7 @@ function endBattle(){
   const ol = $("rRank"); ol.textContent = "";
   board.forEach((r, k) => { const li = document.createElement("li"); if (r.me) li.className = "me";
     const em = document.createElement("em"); em.textContent = (1 + board.filter(x => x.score > r.score).length) + "위"; const i = document.createElement("i"); i.style.background = r.c;
-    const sp = document.createElement("span"); sp.textContent = r.n + (r.me ? " (나)" : ""); const b = document.createElement("b"); b.textContent = r.score + "점";
+    const sp = document.createElement("span"); sp.textContent = `${r.n}${r.me ? " (나)" : ""} · ${r.dried}마리`; const b = document.createElement("b"); b.textContent = r.score + "점";
     li.append(em, i, sp, b); ol.appendChild(li); });
   const st = battle.stats, ul = $("rStats"); ul.textContent = "";
   [`내가 말린 친구 ${st.meDone}마리`,
@@ -1303,8 +1312,8 @@ $("lbSend").addEventListener("click", async () => {
   } catch(e){ $("lbSend").disabled = false; $("lbSend").textContent = "다시 올리기"; $("lbNote").textContent = "올리지 못했어요. 잠시 후 다시 눌러 주세요."; }
 });
 function standings(){
-  const list = [{ n:MEO.nick, c:MEO.top, score:battle.me, me:true }];
-  npcs.slice(0, DIFF[battle.diff].n).forEach((n, k) => list.push({ n:n.n, c:n.top, score:battle.npcScore[k] || 0 }));
+  const list = [{ n:MEO.nick, c:MEO.top, score:battle.me, dried:(battle.stats && battle.stats.meDone) || 0, me:true }];
+  npcs.slice(0, DIFF[battle.diff].n).forEach((n, k) => list.push({ n:n.n, c:n.top, score:battle.npcScore[k] || 0, dried:(battle.npcDried && battle.npcDried[k]) || 0 }));
   return list.sort((a, b) => b.score - a.score || (a.me ? -1 : b.me ? 1 : 0));
 }
 function scoreFor(s, who){
@@ -1641,7 +1650,7 @@ function frame(){
             const full = battle.ionT > 0 && battle.cycleT > 0; if (full) battle.stats.full++;
             toast(`+${pts}점${s.ionHit ? " · 음이온 케어 1.5배" : ""}`);
             say(s, full || Math.random() < .3 ? THIRDLINE : "보송해졌다! 고마워요.");
-          } else { const k = +s.owner.slice(1); battle.npcScore[k] = Math.round(((battle.npcScore[k] || 0) + pts)*10)/10; battle.stats.npcDone++; if (Math.hypot(P.pos.x - c0(s).x, P.pos.z - c0(s).z) < 8) toast(`${npcs[k].n} +${pts}점`); }
+          } else { const k = +s.owner.slice(1); battle.npcScore[k] = Math.round(((battle.npcScore[k] || 0) + pts)*10)/10; battle.npcDried[k] = (battle.npcDried[k] || 0) + 1; battle.stats.npcDone++; if (Math.hypot(P.pos.x - c0(s).x, P.pos.z - c0(s).z) < 8) toast(`${npcs[k].n} +${pts}점`); }
         } else if (Math.hypot(P.pos.x - c0(s).x, P.pos.z - c0(s).z) < 8){ toast("보송해진 친구가 숲으로 돌아가요"); say(s, Math.random() < .45 ? THIRDLINE : "고마워요! 이제 하나도 안 추워요."); }
       }
     }
