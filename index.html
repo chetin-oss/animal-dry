@@ -77,6 +77,8 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--amber);outline-
 .lobby input{border:1px solid var(--line);background:var(--solid);border-radius:10px;padding:8px;font-size:12px;color:var(--ink)}
 .lobby .lbtns{display:flex;gap:8px}
 .lobby .lbtns .cta{flex:1;padding:11px;font-size:16px}
+/* 16px or more keeps phones from zooming in when an input is tapped */
+input,textarea,select{font-size:16px!important}
 .lobby .cta[disabled]{opacity:.45}
 .modes button{border:1px solid var(--line);background:var(--solid);border-radius:14px;padding:11px 12px;text-align:left;display:flex;flex-direction:column;gap:2px}
 .modes button b{font-family:var(--f-display);font-weight:400;font-size:17px}
@@ -1102,6 +1104,7 @@ $("sw").addEventListener("click", e => { const b = e.target.closest("button"); i
 $("enter").addEventListener("click", () => {
   MEO.nick = cleanName($("nick").value) || MEO.nick; store.set("ds.nick", MEO.nick);
   $("intro").hidden = true; entered = true; unlockAudio(); pushPresence(true); renderPeople(); fadeHint();
+  if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); window.scrollTo(0, 0);
   if (pickedMode === "battle") startBattle(); else if (pickedMode === "survival") startSurvival(); else if (pickedMode === "friends") openRoom($("roomCode").value);
 });
 
