@@ -61,7 +61,23 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--amber);outline-
 .groom .gbar{height:10px;border-radius:9px;background:rgba(243,236,225,.14);overflow:hidden}
 .groom .gbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--rain),var(--amber));transition:width .2s}
 .groom .stop{border:0;background:var(--amber);color:var(--amber-ink);border-radius:12px;padding:10px 14px;font-family:var(--f-display);font-size:15px;white-space:nowrap}
-.modes{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.modes{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.coderow{display:flex;gap:8px;align-items:center;font-size:12.5px;color:var(--muted)}
+.coderow input{flex:1;min-width:0;border:1px solid var(--line);background:var(--solid);border-radius:10px;padding:8px 10px;color:var(--ink);font-variant-numeric:tabular-nums;letter-spacing:.15em}
+.lobby{position:fixed;left:50%;transform:translateX(-50%);top:calc(84px + env(safe-area-inset-top,0px));width:min(380px,calc(100vw - 24px));border-radius:20px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.lobby .lhead{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.lobby .lhead small{display:block;font-size:11px;color:var(--muted)}
+.lobby .lhead b{font-family:var(--f-display);font-weight:400;font-size:30px;letter-spacing:.12em;color:var(--amber);font-variant-numeric:tabular-nums}
+.lobby .lhead button{border:1px solid var(--line);background:var(--solid);border-radius:12px;padding:8px 12px;font-size:13px}
+.lobby ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+.lobby li{display:flex;align-items:center;gap:8px;font-size:14px}
+.lobby li i{width:10px;height:10px;border-radius:50%}
+.lobby li em{font-style:normal;font-size:11px;color:var(--amber)}
+.lobby p{margin:0;font-size:12.5px;color:var(--muted)}
+.lobby input{border:1px solid var(--line);background:var(--solid);border-radius:10px;padding:8px;font-size:12px;color:var(--ink)}
+.lobby .lbtns{display:flex;gap:8px}
+.lobby .lbtns .cta{flex:1;padding:11px;font-size:16px}
+.lobby .cta[disabled]{opacity:.45}
 .modes button{border:1px solid var(--line);background:var(--solid);border-radius:14px;padding:11px 12px;text-align:left;display:flex;flex-direction:column;gap:2px}
 .modes button b{font-family:var(--f-display);font-weight:400;font-size:17px}
 .modes button small{font-size:12px;color:var(--muted)}
@@ -170,6 +186,7 @@ kbd{font-family:var(--f-body);font-size:11px;border:1px solid var(--line);border
   .chips{top:calc(160px + env(safe-area-inset-top,0px))}
   .toast{top:calc(196px + env(safe-area-inset-top,0px))}
   .modes{grid-template-columns:1fr}
+  .lobby{top:calc(64px + env(safe-area-inset-top,0px))}
   .pin{min-width:96px;padding:4px 8px 6px}
   .pin b{font-size:12.5px}
 }
@@ -205,6 +222,13 @@ kbd{font-family:var(--f-body);font-size:11px;border:1px solid var(--line);border
   <button type="button" class="stop" id="gStop">그만 말리기</button>
 </div>
 <div class="toast glass" id="toast"></div>
+<div class="lobby glass" id="lobby" hidden>
+  <div class="lhead"><div><small>방 코드</small><b id="lCode"></b></div><button type="button" id="lCopy">초대 링크 복사</button></div>
+  <ul id="lList"></ul>
+  <p id="lNote">친구에게 초대 링크를 보내 주세요. 두 명 이상 모이면 시작할 수 있어요.</p>
+  <input id="lLink" readonly hidden aria-label="초대 링크">
+  <div class="lbtns"><button type="button" class="cta" id="lStart" disabled>3분 대결 시작</button><button type="button" class="cta ghost" id="lLeave">나가기</button></div>
+</div>
 <div class="bhud glass" id="bhud" hidden>
   <div class="sc me"><small id="meLbl">나</small><b id="scMe">0</b></div>
   <span class="clock" id="clock">3:00</span>
@@ -232,8 +256,10 @@ kbd{font-family:var(--f-body);font-size:11px;border:1px solid var(--line);border
     <h2>비에 젖은 동물들을<br>다 같이 말려 주세요</h2>
     <div class="modes" role="group" aria-label="모드">
       <button type="button" data-mode="survival" aria-pressed="true"><b>얼마나 버틸까</b><small>젖은 친구가 많을수록 추위가 빨리 차요 · 기록 순위</small></button>
+      <button type="button" data-mode="friends" aria-pressed="false"><b>친구와 대결</b><small>방 코드로 친구를 불러 3분 동안 겨뤄요</small></button>
       <button type="button" data-mode="battle" aria-pressed="false"><b>드라이 대결 · vs 직원</b><small>3분 개인전 · 나와 직원 모두 각자 점수</small></button>
     </div>
+    <div class="coderow" id="codeRow" hidden><label for="roomCode">방 코드</label><input id="roomCode" inputmode="numeric" maxlength="6" placeholder="비우면 새 방" autocomplete="off"></div>
     <div class="diff" id="diffRow" hidden><span>난이도</span><button type="button" data-d="easy" aria-pressed="false">쉬움</button><button type="button" data-d="normal" aria-pressed="true">보통</button><button type="button" data-d="hard" aria-pressed="false">어려움</button></div>
     <div class="namerow"><label for="nick">내 이름</label><input id="nick" maxlength="10" autocomplete="off"><div class="swatches" id="sw" role="group" aria-label="옷 색"></div></div>
     <button class="cta" id="enter">드라이샵 들어가기</button>
@@ -1076,7 +1102,7 @@ $("sw").addEventListener("click", e => { const b = e.target.closest("button"); i
 $("enter").addEventListener("click", () => {
   MEO.nick = cleanName($("nick").value) || MEO.nick; store.set("ds.nick", MEO.nick);
   $("intro").hidden = true; entered = true; unlockAudio(); pushPresence(true); renderPeople(); fadeHint();
-  if (pickedMode === "battle") startBattle(); else if (pickedMode === "survival") startSurvival();
+  if (pickedMode === "battle") startBattle(); else if (pickedMode === "survival") startSurvival(); else if (pickedMode === "friends") openRoom($("roomCode").value);
 });
 
 /* ================= network ================= */
@@ -1085,7 +1111,7 @@ let lastPres = 0, presDirty = true;
 function presenceObj(){
   return { v:3, x:+P.pos.x.toFixed(2), z:+P.pos.z.toFixed(2), h:+P.head.toFixed(2), b:blow.on ? blow.seat : -1,
     p:blow.on ? [+blow.lp.x.toFixed(3), +blow.lp.y.toFixed(3), +blow.lp.z.toFixed(3)] : null, sq:blow.on ? seats[blow.seat].seq : -1,
-    n:MEO.nick, c:MEO.top, hr:MEO.hair, in:entered, ak:myAct ? myAct.k : "", an:actCount, as:myAct && myAct.seat >= 0 ? myAct.seat : -1 };
+    n:MEO.nick, c:MEO.top, hr:MEO.hair, in:entered, mm:battle.mode === "friends" && room.open ? battle.matchId || "" : "", sc:battle.mode === "friends" ? battle.me : 0, dc:battle.mode === "friends" && battle.stats ? battle.stats.meDone || 0 : 0, ak:myAct ? myAct.k : "", an:actCount, as:myAct && myAct.seat >= 0 ? myAct.seat : -1 };
 }
 function pushPresence(force){ if (!net) return; const now = performance.now(); if (!force && now - lastPres < 110) { presDirty = true; return; } lastPres = now; presDirty = false; net.presence(presenceObj()); }
 // 50 chairs do not fit one message: send the chairs that changed, topped up round-robin, ten at a time
@@ -1104,6 +1130,7 @@ function onState(d){
     if (!Array.isArray(row)) return;
     const [i, sq, w, sp] = row; if (!Number.isInteger(i) || i < 0 || i >= seats.length || !Number.isInteger(sq) || sq < 0 || sq > 1e7) return;
     const s = seats[i];
+    if (room.open && !MATCH_SEATS.includes(i)) return;
     if (sq > s.seq){ seatFriend(s, sq, false); }
     if (sq === s.seq && s.a && s.state === "sit"){ mergeWet(s.a, w); }
   });
@@ -1114,40 +1141,55 @@ function renderPeople(){
   const staffN = battle.on && battle.mode === "duel" ? DIFF[battle.diff].n : 0;
   npcs.slice(0, staffN).forEach(n => list.push({ n:n.n, c:n.top, b:n.seat >= 0 }));
   const realN = list.length - staffN;
-  $("cnt").textContent = !battle.on ? (realN > 1 ? `지금 ${realN}명 접속 중` : "모드를 골라 시작해요") : battle.mode === "survival" ? "혼자 버티는 중" : battle.on ? `개인전 · 나 + 직원 ${staffN}명 (${DIFF[battle.diff].label})` : realN > 1 ? `지금 ${realN}명 + 직원 ${staffN}명이 말리는 중` : `직원 ${staffN}명과 함께 말리는 중`;
+  $("cnt").textContent = !battle.on ? (realN > 1 ? `지금 ${realN}명 접속 중` : "모드를 골라 시작해요") : battle.mode === "survival" ? "혼자 버티는 중" : battle.mode === "friends" ? `친구와 대결 · 방 ${room.code}` : battle.on ? `개인전 · 나 + 직원 ${staffN}명 (${DIFF[battle.diff].label})` : realN > 1 ? `지금 ${realN}명 + 직원 ${staffN}명이 말리는 중` : `직원 ${staffN}명과 함께 말리는 중`;
   const ul = $("plist"); ul.textContent = "";
-  if (battle.on && battle.mode === "duel"){
+  if (battle.on && (battle.mode === "duel" || battle.mode === "friends")){
     standings().forEach((r, k) => { const li = document.createElement("li"); const i = document.createElement("i"); i.style.background = r.c; li.appendChild(i); li.appendChild(document.createTextNode(`${1 + standings().filter(x => x.score > r.score).length}. ${r.n} · ${r.dried}마리 · ${r.score}점`)); if (r.me){ const em = document.createElement("em"); em.textContent = "나"; li.appendChild(em); } ul.appendChild(li); });
     return;
   }
   list.slice(0, 7).forEach(p => { const li = document.createElement("li"); const i = document.createElement("i"); i.style.background = p.c; li.appendChild(i); li.appendChild(document.createTextNode(p.n)); if (p.me){ const em = document.createElement("em"); em.textContent = "나"; li.appendChild(em); } else if (p.b){ const em = document.createElement("em"); em.textContent = "말리는 중"; li.appendChild(em); } ul.appendChild(li); });
 }
-async function startNet(){
-  try { net = await connectNet(); } catch(e){ net = null; }
-  if (!net){ renderPeople(); return; }
+function wireNet(){
   net.on("st", onState);
-  net.onPeers(joined => { if (joined) setTimeout(sendState, 200 + Math.random()*500); renderPeople(); });
+  net.on("mt", onMatch);
+  net.onPeers(joined => { if (joined) setTimeout(sendState, 200 + Math.random()*500); renderPeople(); renderLobby(); });
   pushPresence(true);
+}
+async function startNet(){
+  try { net = await connectNet(null); } catch(e){ net = null; }
   setInterval(sendState, 1000);
-  setInterval(renderPeople, 1500);
+  setInterval(() => { renderPeople(); renderLobby(); }, 1500);
+  if (!net){ renderPeople(); return; }
+  wireNet();
+}
+// move to another room (a friends' match) or back to the shared shop (name = null)
+async function switchNet(name){
+  const old = net; net = null;
+  if (old && old.leave) { try { await old.leave(); } catch(e){} }
+  [...others.keys()].forEach(dropOther);
+  try { net = await connectNet(name); } catch(e){ net = null; }
+  if (net) wireNet();
+  renderPeople(); return !!net;
 }
 // peer-to-peer: people on the same page connect to each other directly (no server account)
-function connectNet(){
+function connectNet(name){
   if (!window.Trystero) return null;
-  let tr; try { tr = window.Trystero.joinRoom({ appId:"animal-dry-shop-kr-2026" }, "shop-1"); } catch(e){ return null; }
-  const aP = tr.makeAction("pr"), aS = tr.makeAction("st");
-  const peers = new Map(), cbs = [], handlers = {}; let mine = null;
+  let tr; try { tr = window.Trystero.joinRoom({ appId:"animal-dry-shop-kr-2026" }, name ? "match-" + name : "shop-1"); } catch(e){ return null; }
+  const aP = tr.makeAction("pr"), aS = tr.makeAction("st"), aM = tr.makeAction("mt");
+  const peers = new Map(), cbs = [], handlers = {}; let mine = null, live = true;
   const safe = f => { try { f(); } catch(e){} };
-  tr.onPeerJoin = id => { peers.set(id, { id, p:null, t:Date.now() }); if (mine) safe(() => aP.send(mine, { target:id })); cbs.forEach(f => f(true)); };
-  tr.onPeerLeave = id => { peers.delete(id); cbs.forEach(f => f(false)); };
-  aP.onMessage = (d, m) => { if (m && m.peerId && d && typeof d === "object") peers.set(m.peerId, { id:m.peerId, p:d, t:Date.now() }); };
-  aS.onMessage = d => (handlers.st || []).forEach(f => f(d));
+  tr.onPeerJoin = id => { if (!live) return; peers.set(id, { id, p:null, t:Date.now() }); if (mine) safe(() => aP.send(mine, { target:id })); cbs.forEach(f => f(true)); };
+  tr.onPeerLeave = id => { peers.delete(id); if (live) cbs.forEach(f => f(false)); };
+  aP.onMessage = (d, m) => { if (live && m && m.peerId && d && typeof d === "object") peers.set(m.peerId, { id:m.peerId, p:d, t:Date.now() }); };
+  aS.onMessage = d => { if (live) (handlers.st || []).forEach(f => f(d)); };
+  aM.onMessage = d => { if (live) (handlers.mt || []).forEach(f => f(d)); };
   return {
-    presence: o => { mine = o; if (peers.size) safe(() => aP.send(o)); },
+    presence: o => { mine = o; if (live && peers.size) safe(() => aP.send(o)); },
     others: () => [...peers.values()].filter(x => x.p),
-    emit: (t, d) => { if (t === "st" && peers.size) safe(() => aS.send(d)); },
+    emit: (t, d) => { if (!live || !peers.size) return; if (t === "st") safe(() => aS.send(d)); else if (t === "mt") safe(() => aM.send(d)); },
     on: (t, f) => { (handlers[t] = handlers[t] || []).push(f); },
-    onPeers: f => { cbs.push(f); }
+    onPeers: f => { cbs.push(f); },
+    leave: async () => { live = false; peers.clear(); safe(() => tr.leave()); }
   };
 }
 
@@ -1171,10 +1213,12 @@ const ITEM_KINDS = {
 };
 const battle = { on:false, diff:"normal", t:0, me:0, npc:0, ionT:0, cycleT:0, heat:"hot", stats:{}, items:[], spawnT:0, ending:false };
 let pickedMode = "survival";
+const inviteCode = (location.hash.match(/^#room-(\d{3,6})$/) || [])[1];
 $("enter").textContent = "버티기 시작";
+if (inviteCode){ setTimeout(() => { const b = document.querySelector('.modes button[data-mode="friends"]'); if (b) b.click(); $("roomCode").value = inviteCode; }, 0); }
 document.querySelectorAll(".modes button").forEach(b => b.addEventListener("click", () => {
   pickedMode = b.dataset.mode; document.querySelectorAll(".modes button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
-  $("diffRow").hidden = pickedMode !== "battle"; $("enter").textContent = pickedMode === "battle" ? "대결 시작" : pickedMode === "survival" ? "버티기 시작" : "드라이샵 들어가기";
+  $("diffRow").hidden = pickedMode !== "battle"; $("codeRow").hidden = pickedMode !== "friends"; $("enter").textContent = pickedMode === "battle" ? "대결 시작" : pickedMode === "survival" ? "버티기 시작" : pickedMode === "friends" ? "방 들어가기" : "드라이샵 들어가기";
 }));
 document.querySelectorAll("#diffRow button").forEach(b => b.addEventListener("click", () => {
   battle.diff = b.dataset.d; document.querySelectorAll("#diffRow button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
@@ -1241,8 +1285,8 @@ function endBattle(){
    st.fled ? `뜨거워서 도망간 친구 ${st.fled}마리` : "뜨거워서 도망간 친구 없음"].forEach(x => { const li = document.createElement("li"); li.textContent = x; ul.appendChild(li); });
   $("result").hidden = false; renderPeople();
 }
-$("again").addEventListener("click", () => { $("result").hidden = true; if (battle.mode === "survival") startSurvival(); else startBattle(); });
-$("toHeal").addEventListener("click", () => { $("result").hidden = true; $("intro").hidden = false; renderPeople(); });
+$("again").addEventListener("click", () => { $("result").hidden = true; if (battle.mode === "survival") startSurvival(); else if (battle.mode === "friends"){ $("lobby").hidden = false; renderLobby(); } else startBattle(); });
+$("toHeal").addEventListener("click", () => { $("result").hidden = true; if (room.open) leaveRoom(); else { $("intro").hidden = false; renderPeople(); } });
 /* ---- 얼마나 버틸까: survive as long as you can ---- */
 const LB = { project:"hair-dry", key:"AIzaSyC6Om4e2dichdLTTyJ366nf-r6pozmIyno" };      // set on the public site: shared Firestore board; otherwise this device only
 const fmtTime = s => { s = Math.max(0, s); const m = Math.floor(s/60), r = Math.floor(s%60); return m ? `${m}분 ${r}초` : `${r}초`; };
@@ -1343,7 +1387,75 @@ $("lbSend").addEventListener("click", async () => {
     drawBoard(rows, id); $("lbNote").textContent = at >= 0 ? `${at + 1}위에 올랐어요!` : "기록을 올렸어요. 10위 안에는 아직 못 들었어요.";
   } catch(e){ $("lbSend").disabled = false; $("lbSend").textContent = "다시 올리기"; $("lbNote").textContent = "올리지 못했어요. 잠시 후 다시 눌러 주세요."; }
 });
+/* ---- 친구와 대결: a room code, a lobby, then a 3-minute free-for-all ---- */
+const MATCH_SEATS = []; [1, 2, 3].forEach(isl => [0, 1].forEach(sd => [1, 2, 3].forEach(xi => MATCH_SEATS.push(isl*10 + sd*5 + xi))));
+const room = { code:"", open:false };
+function inviteLink(){ return location.href.split("#")[0] + "#room-" + room.code; }
+async function openRoom(code){
+  code = String(code || "").replace(/\D/g, "").slice(0, 6) || String(1000 + Math.floor(Math.random()*9000));
+  room.code = code; room.open = true; battle.mode = "friends"; battle.on = false;
+  $("lCode").textContent = code; $("lLink").value = inviteLink(); $("lLink").hidden = true;
+  $("lobby").hidden = false; $("acts").hidden = true;
+  try { location.hash = "room-" + code; } catch(e){}
+  const ok = await switchNet("m" + code);
+  if (!ok){ $("lNote").textContent = "친구와 연결하지 못했어요. 잠시 후 다시 들어와 주세요."; }
+  renderLobby();
+}
+function roomPeople(){
+  const list = [{ n:MEO.nick, c:MEO.top, me:true }];
+  if (net) net.others().forEach(o => { const p = o.p; if (p && p.v === 3 && p.in) list.push({ n:cleanName(p.n) || "친구", c:/^#[0-9a-f]{6}$/i.test(p.c || "") ? p.c : "#999", busy:!!p.mm && p.mm !== battle.matchId }); });
+  return list;
+}
+function renderLobby(){
+  if (!room.open || $("lobby").hidden) return;
+  const list = roomPeople(), ul = $("lList"); ul.textContent = "";
+  list.forEach(p => { const li = document.createElement("li"); const i = document.createElement("i"); i.style.background = p.c; li.appendChild(i); li.appendChild(document.createTextNode(p.n)); if (p.me){ const em = document.createElement("em"); em.textContent = "나"; li.appendChild(em); } else if (p.busy){ const em = document.createElement("em"); em.textContent = "대결 중"; li.appendChild(em); } ul.appendChild(li); });
+  $("lStart").disabled = list.length < 2 || !net;
+  if (net) $("lNote").textContent = list.length < 2 ? "친구에게 초대 링크를 보내 주세요. 두 명 이상 모이면 시작할 수 있어요." : `${list.length}명이 모였어요. 누구든 시작을 누르면 모두 함께 시작해요.`;
+}
+$("lCopy").addEventListener("click", () => {
+  const link = inviteLink();
+  const shown = () => { $("lLink").hidden = false; $("lLink").value = link; $("lLink").select(); $("lNote").textContent = "링크를 길게 눌러 복사해 친구에게 보내 주세요."; };
+  try { navigator.clipboard.writeText(link).then(() => toast("초대 링크를 복사했어요"), shown); } catch(e){ shown(); }
+});
+$("lLeave").addEventListener("click", leaveRoom);
+async function leaveRoom(){
+  room.open = false; $("lobby").hidden = true; battle.on = false; battle.mode = "duel";
+  try { history.replaceState(null, "", location.href.split("#")[0]); } catch(e){}
+  await switchNet(null);
+  $("intro").hidden = false; renderPeople();
+}
+$("lStart").addEventListener("click", () => {
+  if (!net) return;
+  const base = Math.max(...MATCH_SEATS.map(i => seats[i].seq)) + 1;
+  const msg = { k:"go", id:Math.random().toString(36).slice(2, 10), base, d:180 };
+  net.emit("mt", msg); startFriendMatch(msg);
+});
+function onMatch(d){
+  if (!d || typeof d !== "object" || !room.open) return;
+  if (d.k === "go" && typeof d.id === "string" && Number.isInteger(d.base) && d.base > 0 && d.base < 1e7 && !(battle.on && battle.matchId === d.id)) startFriendMatch(d);
+  if (d.k === "done" && battle.on && battle.mode === "friends" && Number.isInteger(d.seat) && MATCH_SEATS.includes(d.seat)){
+    const s = seats[d.seat];
+    if (s.a && s.seq === d.seq && s.state === "sit"){ for (let k=0;k<TUFTS;k++) s.a.wet[k] = 0; s.a.dirty = true; s.owner = "r"; s.state = "happy"; s.t = 0; }
+  }
+}
+function startFriendMatch(msg){
+  clearItems(); exitGroom(); leavers.forEach(L => dropAnimal(L.a)); leavers.length = 0;
+  battle.mode = "friends"; battle.matchId = msg.id; battle.on = true; battle.ending = false; battle.t = Math.min(300, Math.max(30, +msg.d || 180));
+  battle.me = 0; battle.ionT = 0; battle.cycleT = 0; battle.spawnT = 4; battle.stats = { meDone:0, ionDone:0, full:0, fled:0 };
+  setHeat("hot");
+  seats.forEach(s => { if (MATCH_SEATS.includes(s.i)) seatFriend(s, msg.base, false); else emptySeat(s); });
+  $("lobby").hidden = true; $("bhud").hidden = false; $("heatBtn").hidden = false; $("abarW").hidden = false; $("result").hidden = true; $("acts").hidden = true; $("intro").hidden = true;
+  $("meLbl").textContent = "나"; $("scNpc").parentNode.className = "sc npc"; $("lbSendRow").hidden = true; $("lbNote").textContent = ""; $("rEye").textContent = "친구와 대결 · 결과";
+  toast("친구와 대결 시작! 3분 동안 가장 많이 말린 사람이 이겨요");
+  pushPresence(true); renderPeople();
+}
 function standings(){
+  if (battle.mode === "friends"){
+    const list = [{ n:MEO.nick, c:MEO.top, score:battle.me, dried:(battle.stats && battle.stats.meDone) || 0, me:true }];
+    if (net) net.others().forEach(o => { const p = o.p; if (p && p.v === 3 && p.mm && p.mm === battle.matchId) list.push({ n:cleanName(p.n) || "친구", c:/^#[0-9a-f]{6}$/i.test(p.c || "") ? p.c : "#999", score:+p.sc || 0, dried:+p.dc || 0 }); });
+    return list.sort((a, b) => b.score - a.score || (a.me ? -1 : b.me ? 1 : 0));
+  }
   const list = [{ n:MEO.nick, c:MEO.top, score:battle.me, dried:(battle.stats && battle.stats.meDone) || 0, me:true }];
   npcs.slice(0, DIFF[battle.diff].n).forEach((n, k) => list.push({ n:n.n, c:n.top, score:battle.npcScore[k] || 0, dried:(battle.npcDried && battle.npcDried[k]) || 0 }));
   return list.sort((a, b) => b.score - a.score || (a.me ? -1 : b.me ? 1 : 0));
@@ -1557,7 +1669,7 @@ function frame(){
       if (bs && bs.a && bs.state === "sit" && pr.sq === bs.seq && Array.isArray(pr.p) && pr.p.every(Number.isFinite)){
         const lp = new THREE.Vector3(clamp(pr.p[0], -1, 1), clamp(pr.p[1], -.2, 2), clamp(pr.p[2], -1.5, 1.5));
         bs.a.pivot.updateMatrixWorld(); tgt = bs.a.pivot.localToWorld(lp.clone());
-        blowers.push({ seat:bs.i, lp, from:o.g.userData.rig.dryer.position, power:1 });
+        blowers.push({ seat:bs.i, lp, from:o.g.userData.rig.dryer.position, power:1, owner:"r" });
       }
       if (Number.isInteger(pr.an) && pr.an !== o.lastAn){
         if (o.lastAn !== undefined && ACTS[pr.ak]) o.act = { k:pr.ak, t:0, seat: Number.isInteger(pr.as) && pr.as >= 0 && pr.as < seats.length ? pr.as : -1 };
@@ -1674,6 +1786,13 @@ function frame(){
           const melt = s.ionHit ? .13 : .1; battle.cold = Math.max(0, battle.cold - melt);
           toast(`보송! 추위 -${Math.round(melt*100)}%${s.ionHit ? " · 음이온 케어" : ""}`);
           if (Math.random() < .3) say(s, THIRDLINE);
+        } else if (battle.on && battle.mode === "friends"){
+          if (s.owner === "me"){
+            const pts = scoreFor(s, "me"); battle.me = Math.round((battle.me + pts)*10)/10; battle.stats.meDone++; if (s.ionHit) battle.stats.ionDone++;
+            const full = battle.ionT > 0 && battle.cycleT > 0; if (full) battle.stats.full++;
+            toast(`+${pts}점${s.ionHit ? " · 음이온 케어 1.5배" : ""}`); say(s, full || Math.random() < .3 ? THIRDLINE : "보송해졌다! 고마워요.");
+            if (net) net.emit("mt", { k:"done", seat:s.i, seq:s.seq }); pushPresence(true);
+          }
         } else if (battle.on && s.owner && (s.owner === "me" || s.owner[0] === "n")){
           const pts = scoreFor(s, s.owner);
           if (s.owner === "me"){
